@@ -1,0 +1,6 @@
+@Couchbase.TravelSample_HostAddress = http://localhost:5021
+
+GET {{Couchbase.TravelSample_HostAddress}}/airports/
+Accept: application/json
+
+###
