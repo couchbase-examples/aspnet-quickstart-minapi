@@ -1,8 +1,8 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Couchbase.TravelSample.Tests", "Couchbase.TravelSample.Tests\Couchbase.TravelSample.Tests.csproj", "{DD87F9B1-71A2-49A9-85AB-D18B95F78E3E}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Couchbase.TravelSample.Tests", "src\Couchbase.TravelSample.Tests\Couchbase.TravelSample.Tests.csproj", "{DD87F9B1-71A2-49A9-85AB-D18B95F78E3E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Couchbase.TravelSample", "Couchbase.TravelSample\Couchbase.TravelSample.csproj", "{0A06F3B5-E426-4D36-972F-B04A5A917D54}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Couchbase.TravelSample", "src\Couchbase.TravelSample\Couchbase.TravelSample.csproj", "{0A06F3B5-E426-4D36-972F-B04A5A917D54}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
