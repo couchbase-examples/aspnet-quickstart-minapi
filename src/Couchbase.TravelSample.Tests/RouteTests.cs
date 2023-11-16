@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
+using System.Text;
 using Couchbase.TravelSample.Models;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Newtonsoft.Json;
@@ -8,116 +9,157 @@ namespace Couchbase.TravelSample.Tests;
 
 public class RouteTests : IClassFixture<WebApplicationFactory<Program>>
 {
-    private readonly WebApplicationFactory<Program> _factory;
     private readonly HttpClient _client;
-    
+    private const string BaseHostname = "/api/v1/route";
+
     public RouteTests(WebApplicationFactory<Program> factory)
     {
-        _factory = factory;
-        _client = _factory.CreateClient();
+        _client = factory.CreateClient();
     }
-
+    
     [Fact]
     public async Task GetRouteByIdTestAsync()
     {
-        // Specify a valid ID
-        const string id = "route_10000";
+        // Create route
+        const string documentId = "route_test_get";
+        var route = GetRoute();
+        var newRoute = JsonConvert.SerializeObject(route);
+        var content = new StringContent(newRoute, Encoding.UTF8, "application/json");
+        var response = await _client.PostAsync($"{BaseHostname}/{documentId}", content);
 
-        // Send an HTTP GET request to the /route/{id} endpoint
-        var getResponse = await _client.GetAsync($"/route/{id}");
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+        var jsonResults = await response.Content.ReadAsStringAsync();
+        var newRouteResult = JsonConvert.DeserializeObject<Route>(jsonResults);
 
-        // Assert that the HTTP response status code is OK
+        // Get the route by ID
+        var getResponse = await _client.GetAsync($"{BaseHostname}/{documentId}");
         Assert.Equal(HttpStatusCode.OK, getResponse.StatusCode);
-
-        // Read the JSON response content and deserialize it
         var getJsonResult = await getResponse.Content.ReadAsStringAsync();
         var resultRoute = JsonConvert.DeserializeObject<Route>(getJsonResult);
-        
-        if (resultRoute != null) Assert.Equal("AF", resultRoute.Airline);
+
+        // Validate the retrieved route
+        if (resultRoute != null)
+        {
+            Assert.Equal(newRouteResult?.Airline, resultRoute.Airline);
+            Assert.Equal(newRouteResult?.SourceAirport, resultRoute.SourceAirport);
+            Assert.Equal(newRouteResult?.DestinationAirport, resultRoute.DestinationAirport);
+        }
+
+        // Remove route
+        var deleteResponse = await _client.DeleteAsync($"{BaseHostname}/{documentId}");
+        Assert.Equal(HttpStatusCode.OK, deleteResponse.StatusCode);
     }
-    
+
     [Fact]
     public async Task CreateRouteTestAsync()
     {
-        // Define a unique ID and create a request object with valid data
-        const string id = "route_001";
+        // Create route
+        const string documentId = "route_test_insert";
+        var route = GetRoute();
+        var newRoute = JsonConvert.SerializeObject(route);
+        var content = new StringContent(newRoute, Encoding.UTF8, "application/json");
+        var response = await _client.PostAsync($"{BaseHostname}/{documentId}", content);
 
-        var request = new RouteCreateRequestCommand
-        {
-            Airline = "AF",
-            AirlineId = "airline_137",
-            SourceAirport = "TLV",
-            DestinationAirport = "MRS",
-            Stops = 0,
-            Equipment = "320",
-            Schedule = new List<Schedule>
-            {
-                new Schedule { Day = 0, Utc = "10:13:00", Flight = "AF198" },
-                new Schedule { Day = 0, Utc = "19:14:00", Flight = "AF547" },
-                new Schedule { Day = 0, Utc = "01:31:00", Flight = "AF943" },
-                new Schedule { Day = 1, Utc = "12:40:00", Flight = "AF356" }
-            },
-            Distance = 2881.617376098415
-        };
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+        var jsonResults = await response.Content.ReadAsStringAsync();
+        var newRouteResult = JsonConvert.DeserializeObject<Route>(jsonResults);
 
+        // Validate creation 
+        Assert.Equal(route.Airline, newRouteResult?.Airline);
+        Assert.Equal(route.SourceAirport, newRouteResult?.SourceAirport);
+        Assert.Equal(route.DestinationAirport, newRouteResult?.DestinationAirport);
 
-        // Send an HTTP POST request to create the route
-        var postResponse = await _client.PostAsJsonAsync($"/route/{id}", request);
-
-        // Assert that the HTTP response status code is Created
-        Assert.Equal(HttpStatusCode.Created, postResponse.StatusCode);
-        var responseContent = await postResponse.Content.ReadAsStringAsync();
-        Assert.Contains("AF", responseContent);
+        // Remove route
+        var deleteResponse = await _client.DeleteAsync($"{BaseHostname}/{documentId}");
+        Assert.Equal(HttpStatusCode.OK, deleteResponse.StatusCode);
     }
-    
-    [Fact]
-    public async Task UpdateAirlineTestAsync()
-    {
-        // Specify an existing ID and create a request object with updated data
-        const string id = "route_001";
 
-        var request = new RouteCreateRequestCommand()
+    [Fact]
+    public async Task UpdateRouteTestAsync()
+    {
+        // Create route
+        const string documentId = "route_test_update";
+        var route = GetRoute();
+        var newRoute = JsonConvert.SerializeObject(route);
+        var content = new StringContent(newRoute, Encoding.UTF8, "application/json");
+        var response = await _client.PostAsync($"{BaseHostname}/{documentId}", content);
+
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+        var jsonResults = await response.Content.ReadAsStringAsync();
+        var newRouteResult = JsonConvert.DeserializeObject<Route>(jsonResults);
+
+        // Update route
+        if (newRouteResult != null)
         {
-            Airline = "AF",
-            AirlineId = "UpdatedId",
-            SourceAirport = "Updated airport",
-            DestinationAirport = "Updated destination airport",
-            Stops = 5,
-            Equipment = "100",
-            Schedule = new List<Schedule>
-            {
-                new Schedule { Day = 1, Utc = "19:13:00", Flight = "AF198" },
-                new Schedule { Day = 2, Utc = "10:14:00", Flight = "AF547" },
-                new Schedule { Day = 0, Utc = "02:31:00", Flight = "AF943" },
-                new Schedule { Day = 1, Utc = "11:40:00", Flight = "AF356" }
-            },
-            Distance = 881.617376098415
-        };
+            UpdateRoute(newRouteResult);
+            var updatedRoute = JsonConvert.SerializeObject(newRouteResult);
+            content = new StringContent(updatedRoute, Encoding.UTF8, "application/json");
+            response = await _client.PutAsync($"{BaseHostname}/{documentId}", content);
 
-        // Send an HTTP PUT request to update the route
-        var putResponse = await _client.PutAsJsonAsync($"/route/{id}", request);
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+            jsonResults = await response.Content.ReadAsStringAsync();
+            var updatedRouteResult = JsonConvert.DeserializeObject<Route>(jsonResults);
 
-        // Assert that the HTTP response status code is OK
-        Assert.Equal(HttpStatusCode.OK, putResponse.StatusCode);
-        var responseContent = await putResponse.Content.ReadAsStringAsync();
-        Assert.Contains("AF", responseContent);
+            // Validate update
+            Assert.Equal(newRouteResult.Airline, updatedRouteResult?.Airline);
+            Assert.Equal(newRouteResult.SourceAirport, updatedRouteResult?.SourceAirport);
+            Assert.Equal(newRouteResult.DestinationAirport, updatedRouteResult?.DestinationAirport);
+        }
+
+        // Remove route
+        var deleteResponse = await _client.DeleteAsync($"{BaseHostname}/{documentId}");
+        Assert.Equal(HttpStatusCode.OK, deleteResponse.StatusCode);
     }
-    
+
     [Fact]
-    public async Task DeleteAirlineTestAsync()
+    public async Task DeleteRouteTestAsync()
     {
-        // Specify an existing ID to delete
-        const string id = "route_001";
+        // Create route
+        const string documentId = "route_test_delete";
+        var route = GetRoute();
+        var newRoute = JsonConvert.SerializeObject(route);
+        var content = new StringContent(newRoute, Encoding.UTF8, "application/json");
+        var response = await _client.PostAsync($"{BaseHostname}/{documentId}", content);
 
-        // Send an HTTP DELETE request to delete the route
-        var deleteResponse = await _client.DeleteAsync($"/route/{id}");
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+        var jsonResults = await response.Content.ReadAsStringAsync();
+        var newRouteResult = JsonConvert.DeserializeObject<Route>(jsonResults);
 
-        // Assert that the HTTP response status code is OK
+        // Delete route
+        var deleteResponse = await _client.DeleteAsync($"{BaseHostname}/{documentId}");
         Assert.Equal(HttpStatusCode.OK, deleteResponse.StatusCode);
 
-        // check if the route is no longer accessible
-        var getResponse = await _client.GetAsync($"/route/{id}");
+        // Check if the route is no longer accessible
+        var getResponse = await _client.GetAsync($"{BaseHostname}/{documentId}");
         Assert.Equal(HttpStatusCode.NotFound, getResponse.StatusCode);
+    }
+
+    
+    private static RouteCreateRequestCommand GetRoute()
+    {
+        return new RouteCreateRequestCommand()
+        {
+            Airline = "SAF",
+            AirlineId = "airline_sample",
+            DestinationAirport = "JFK",
+            Distance = 1000.79,
+            Equipment = "CRJ",
+            Schedule = new List<Schedule>() { new Schedule() { Day = 0, Utc = "14:05:00", Flight = "SAF123"}} ,
+            SourceAirport = "SFO",
+            Stops = 0
+        };
+    }
+    
+    private static void UpdateRoute(Route route)
+    {
+        route.Airline = "USAF";
+        route.AirlineId = "airline_sample_updated";
+        route.DestinationAirport = "JFK";
+        route.Distance = 1000.79;
+        route.Equipment = "CRJ";
+        route.Schedule = new List<Schedule>() { new Schedule() { Day = 0, Utc = "14:05:00", Flight = "SAF123" } };
+        route.SourceAirport = "SFO";
+        route.Stops = 0;
     }
     
 }

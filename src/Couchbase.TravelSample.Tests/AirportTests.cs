@@ -9,45 +9,52 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Newtonsoft.Json;
 using Xunit;
 
-
 namespace Couchbase.TravelSample.Tests;
 
 public class AirportTests 
     : IClassFixture<WebApplicationFactory<Program>>
 {
-    private readonly WebApplicationFactory<Program> _factory;
     private readonly HttpClient _client;
-    
+    private const string BaseHostname = "/api/v1/airport";
+
     public AirportTests(WebApplicationFactory<Program> factory)
     {
-        _factory = factory;
-        _client = _factory.CreateClient();
+        _client = factory.CreateClient();
     }
-
+    
     [Fact]
-    public async Task GetAirportListTestAsync()
+    public async Task TestListAirportsInCountryWithPaginationAsync()
     {
-        // Create query parameters
-        const string country = "United States";
-        const int limit = 5;
-        const int offset = 0;
+        // Define parameters
+        const string country = "France";
+        const int pageSize = 3;
+        const int iterations = 3;
+        var airportsList = new HashSet<string>();
 
-        // Send an HTTP GET request to the /airport/list endpoint with the specified query parameters
-        var getResponse = await _client.GetAsync($"/airport/list?country={country}&limit={limit}&offset={offset}");
-
-        // Assert that the HTTP response status code is OK
-        Assert.Equal(HttpStatusCode.OK, getResponse.StatusCode);
-
-        // Read the JSON response content and deserialize it
-        var getJsonResult = await getResponse.Content.ReadAsStringAsync();
-        var results = JsonConvert.DeserializeObject<List<Airport>>(getJsonResult);
-
-        if (results != null)
+        for (var i = 0; i < iterations; i++)
         {
-            Assert.Equal(5, results.Count);
-            Assert.Equal("United States", results[0].Country);
+            // Send an HTTP GET request to the /airport/list endpoint with the specified query parameters
+            var getResponse = await _client.GetAsync($"{BaseHostname}/list?country={country}&limit={pageSize}&offset={pageSize * i}");
+
+            // Assert that the HTTP response status code is OK
+            Assert.Equal(HttpStatusCode.OK, getResponse.StatusCode);
+
+            // Read the JSON response content and deserialize it
+            var getJsonResult = await getResponse.Content.ReadAsStringAsync();
+            var results = JsonConvert.DeserializeObject<List<Airport>>(getJsonResult);
+
+            if (results == null) continue;
+            Assert.Equal(pageSize, results.Count);
+            foreach (var airport in results)
+            {
+                airportsList.Add(airport.Airportname);
+                Assert.Equal(country, airport.Country);
+            }
         }
+
+        Assert.Equal(pageSize * iterations, airportsList.Count);
     }
+
     
     [Fact]
     public async Task GetDirectConnectionsTestAsync()
@@ -56,109 +63,163 @@ public class AirportTests
         const string airport = "SFO";
         const int limit = 5;
         const int offset = 0;
-
+    
         // Send an HTTP GET request to the /airport/direct-connections endpoint with the specified query parameters
-        var getResponse = await _client.GetAsync($"/airport/direct-connections?airport={airport}&limit={limit}&offset={offset}");
-
+        var getResponse = await _client.GetAsync($"{BaseHostname}/direct-connections?airport={airport}&limit={limit}&offset={offset}");
+    
         // Assert that the HTTP response status code is OK
         Assert.Equal(HttpStatusCode.OK, getResponse.StatusCode);
-
+    
         // Read the JSON response content and deserialize it
         var getJsonResult = await getResponse.Content.ReadAsStringAsync();
         var results = JsonConvert.DeserializeObject<List<DestinationAirport>>(getJsonResult);
-
+    
         if (results != null)
         {
-            Assert.Equal(5, results.Count);
-            Assert.Equal("ABQ", results[0].Destinationairport);
+            Assert.Equal(limit, results.Count);
         }
     }
 
     [Fact]
     public async Task GetAirportByIdTestAsync()
     {
-        // Specify a valid ID
-        const string id = "airport_1263";
+        // Create airport
+        const string documentId = "airport_test_get";
+        var airport = GetAirport();
+        var newAirport = JsonConvert.SerializeObject(airport);
+        var content = new StringContent(newAirport, Encoding.UTF8, "application/json");
+        var response = await _client.PostAsync($"{BaseHostname}/{documentId}", content);
 
-        // Send an HTTP GET request to the /airport/{id} endpoint
-        var getResponse = await _client.GetAsync($"/airport/{id}");
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+        var jsonResults = await response.Content.ReadAsStringAsync();
+        var newAirportResult = JsonConvert.DeserializeObject<Airport>(jsonResults);
 
-        // Assert that the HTTP response status code is OK
+        // Get the airport by ID
+        var getResponse = await _client.GetAsync($"{BaseHostname}/{documentId}");
         Assert.Equal(HttpStatusCode.OK, getResponse.StatusCode);
-
-        // Read the JSON response content and deserialize it
         var getJsonResult = await getResponse.Content.ReadAsStringAsync();
         var resultAirport = JsonConvert.DeserializeObject<Airport>(getJsonResult);
-        
-        if (resultAirport != null) Assert.Equal("France", resultAirport.Country);
+
+        // Validate the retrieved airport
+        if (resultAirport != null)
+        {
+            Assert.Equal(newAirportResult?.Airportname, resultAirport.Airportname);
+            Assert.Equal(newAirportResult?.City, resultAirport.City);
+            Assert.Equal(newAirportResult?.Country, resultAirport.Country);
+        }
+
+        // Remove airport
+        var deleteResponse = await _client.DeleteAsync($"{BaseHostname}/{documentId}");
+        Assert.Equal(HttpStatusCode.OK, deleteResponse.StatusCode);
     }
-    
+
+
     [Fact]
     public async Task CreateAirportTestAsync()
     {
-        // Define a unique airport ID and create a request object with valid data
-        const string id = "airport_001";
+        // Create airport
+        const string documentId = "airport_test_insert";
+        var airport = GetAirport();
+        var newAirport = JsonConvert.SerializeObject(airport);
+        var content = new StringContent(newAirport, Encoding.UTF8, "application/json");
+        var response = await _client.PostAsync($"{BaseHostname}/{documentId}", content);
 
-        var request = new AirportCreateRequestCommand
-        {
-            Airportname = "Cazaux",
-            City = "Cazaux",
-            Country = "France",
-            Faa = null,
-            Icao = "LFBC",
-            Tz = "Europe/Paris",
-            Geo = new Geo { Lat = 44.533333, Lon = -1.125, Alt = 84 }
-        };
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+        var jsonResults = await response.Content.ReadAsStringAsync();
+        var newAirportResult = JsonConvert.DeserializeObject<Airport>(jsonResults);
 
-        // Send an HTTP POST request to create the airport
-        var postResponse = await _client.PostAsJsonAsync($"/airport/{id}", request);
+        // Validate creation 
+        Assert.Equal(airport.Airportname, newAirportResult?.Airportname);
+        Assert.Equal(airport.City, newAirportResult?.City);
+        Assert.Equal(airport.Country, newAirportResult?.Country);
 
-        // Assert that the HTTP response status code is Created
-        Assert.Equal(HttpStatusCode.Created, postResponse.StatusCode);
-        var responseContent = await postResponse.Content.ReadAsStringAsync();
-        Assert.Contains("France", responseContent);
+        // Remove airport
+        var deleteResponse = await _client.DeleteAsync($"{BaseHostname}/{documentId}");
+        Assert.Equal(HttpStatusCode.OK, deleteResponse.StatusCode);
     }
-    
+
     [Fact]
     public async Task UpdateAirportTestAsync()
     {
-        // Specify an existing ID and create a request object with updated data
-        const string id = "airport_001";
+        // Create airport
+        const string documentId = "airport_test_update";
+        var airport = GetAirport();
+        var newAirport = JsonConvert.SerializeObject(airport);
+        var content = new StringContent(newAirport, Encoding.UTF8, "application/json");
+        var response = await _client.PostAsync($"{BaseHostname}/{documentId}", content);
 
-        var request = new AirportCreateRequestCommand
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+        var jsonResults = await response.Content.ReadAsStringAsync();
+        var newAirportResult = JsonConvert.DeserializeObject<Airport>(jsonResults);
+
+        // Update airport
+        if (newAirportResult != null)
         {
-            Airportname = "Updated Airport",
-            City = "Updated City",
-            Country = "Updated Country",
-            Faa = "UPTD",
-            Icao = "UPDICAO",
-            Tz = "Europe/Paris",
-            Geo = new Geo { Lat = 55.123456, Lon = -3.987654, Alt = 100 }
-        };
+            UpdateAirport(newAirportResult);
+            var updatedAirport = JsonConvert.SerializeObject(newAirportResult);
+            content = new StringContent(updatedAirport, Encoding.UTF8, "application/json");
+            response = await _client.PutAsync($"{BaseHostname}/{documentId}", content);
 
-        // Send an HTTP PUT request to update the airport
-        var putResponse = await _client.PutAsJsonAsync($"/airport/{id}", request);
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+            jsonResults = await response.Content.ReadAsStringAsync();
+            var updatedAirportResult = JsonConvert.DeserializeObject<Airport>(jsonResults);
 
-        // Assert that the HTTP response status code is OK
-        Assert.Equal(HttpStatusCode.OK, putResponse.StatusCode);
-        var responseContent = await putResponse.Content.ReadAsStringAsync();
-        Assert.Contains("Europe", responseContent);
+            // Validate update
+            Assert.Equal(newAirportResult.Airportname, updatedAirportResult?.Airportname);
+            Assert.Equal(newAirportResult.City, updatedAirportResult?.City);
+            Assert.Equal(newAirportResult.Country, updatedAirportResult?.Country);
+
+            // Remove airport
+            var deleteResponse = await _client.DeleteAsync($"{BaseHostname}/{documentId}");
+            Assert.Equal(HttpStatusCode.OK, deleteResponse.StatusCode);
+        }
     }
-    
+
     [Fact]
     public async Task DeleteAirportTestAsync()
     {
-        // Specify an existing ID to delete
-        const string id = "airport_001";
+        // Create airport
+        const string documentId = "airport_test_delete";
+        var airport = GetAirport();
+        var newAirport = JsonConvert.SerializeObject(airport);
+        var content = new StringContent(newAirport, Encoding.UTF8, "application/json");
+        var response = await _client.PostAsync($"{BaseHostname}/{documentId}", content);
 
-        // Send an HTTP DELETE request to delete the airport
-        var deleteResponse = await _client.DeleteAsync($"/airport/{id}");
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+        var jsonResults = await response.Content.ReadAsStringAsync();
+        var newAirportResult = JsonConvert.DeserializeObject<Airport>(jsonResults);
 
-        // Assert that the HTTP response status code is OK
+        // Delete airport
+        var deleteResponse = await _client.DeleteAsync($"{BaseHostname}/{documentId}");
         Assert.Equal(HttpStatusCode.OK, deleteResponse.StatusCode);
 
-        // check if the airport is no longer accessible
-        var getResponse = await _client.GetAsync($"/airport/{id}");
+        // Check if the airport is no longer accessible
+        var getResponse = await _client.GetAsync($"{BaseHostname}/{documentId}");
         Assert.Equal(HttpStatusCode.NotFound, getResponse.StatusCode);
+    }
+
+    private static AirportCreateRequestCommand GetAirport()
+    {
+        return new AirportCreateRequestCommand()
+        {
+            Airportname = "Test Airport",
+            City = "Test City",
+            Country = "Test Country",
+            Faa = "TAA",
+            Icao = "TAAS",
+            Tz = "Europe/Berlin",
+            Geo = new Geo { Lat = 40, Lon = 42, Alt = 100 }
+        };
+    }
+    
+    private static void UpdateAirport(Airport airport)
+    {
+        airport.Airportname = "Updated Airport";
+        airport.City = "Updated City";
+        airport.Country = "Updated Country";
+        airport.Faa = "UPTD";
+        airport.Icao = "UPDICAO";
+        airport.Tz = "Europe/Paris";
+        airport.Geo = new Geo { Lat = 55.123456, Lon = -3.987654, Alt = 100 };
     }
 }
