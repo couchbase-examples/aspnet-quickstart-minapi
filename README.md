@@ -1,6 +1,6 @@
 # Quickstart in Couchbase with C# and ASP.NET 8 Minimum API
 
-#### Build a REST API with Couchbase's C# SDK 3.4 and ASP.NET Minimum API
+#### Build a REST API with Couchbase's C# SDK (3.4.x) and ASP.NET Minimum API
 
 > This repo is designed to teach you how to connect to a Couchbase cluster to create, read, update, and delete documents and how to write simple parametrized N1QL queries using the new ASP.NET Minimum API framework and the built-in travel-sample bucket. If you want to run this tutorial using a self managed Couchbase cluster, please refer to the [appendix](#appendix-running-self-managed-couchbase-cluster).
 
@@ -9,7 +9,7 @@ Full documentation can be found on the [Couchbase Developer Portal](https://deve
 ## Prerequisites
 To run this prebuilt project, you will need:
 
-- Couchbase Server (7 or higher) with [travel-sample](https://docs.couchbase.com/python-sdk/current/ref/travel-app-data-model.html) bucket loaded.
+- Couchbase Server (7 or higher) with [travel-sample](https://docs.couchbase.com/dotnet-sdk/current/ref/travel-app-data-model.html#the-travel-application-data-model) bucket loaded.
   - [Couchbase Capella](https://www.couchbase.com/products/capella/) is the easiest way to get started.
 - [.NET SDK v8+](https://dotnet.microsoft.com/download/dotnet/8.0) installed
 - Code Editor installed (Visual Studio Professional, Visual Studio Code, or JetBrains Rider)
@@ -40,14 +40,6 @@ Specifically, you need to do the following:
 - Create the [database credentials](https://docs.couchbase.com/cloud/clusters/manage-database-users.html) to access the travel-sample bucket (Read and Write) used in the application.
 - [Allow access](https://docs.couchbase.com/cloud/clusters/allow-ip-address.html) to the Cluster from the IP on which the application is running.
 
-> Note: The connection string expects the `couchbases://` or `couchbase://` part.
-
-#### Capella Users
-
-For Capella users, follow the directions for [Configure Database Credentials](https://docs.couchbase.com/cloud/clusters/manage-database-users.html); name it `Administrator` with a password of `P@$$w0rd12`.
-
-Next, open the [appsettings.Development.json](https://github.com/couchbase-examples/aspnet-minapi-quickstart-travelsample/blob/main/src/Couchbase.TravelSample/appsettings.Development.json) file.  Locate the ConnectionString property and update it to match your Wide Area Network name found in the [Capella Portal UI Connect tab](https://docs.couchbase.com/cloud/get-started/connect-to-cluster.html#connect-to-your-cluster-using-the-built-in-sdk-examples). Note that Capella uses TLS so the connection string must start with couchbases://.  This configuration is designed for development environments only.
-
 ```json
   "Couchbase": {
     "BucketName": "travel-sample",
@@ -62,6 +54,9 @@ Next, open the [appsettings.Development.json](https://github.com/couchbase-examp
 
 ```
 
+> Note: The connection string expects the `couchbases://` or `couchbase://` part.
+
+
 ## Running The Application
 
 ### Running directly on machine
@@ -72,21 +67,23 @@ cd src/Couchbase.TravelSample
 dotnet run
 ```
 
-Once the site is up and running you can launch your browser and go to the [Swagger start page](https://localhost:5021/swagger/index.html) to test the APIs.
-
 ### Running using docker
 
   - Build the Docker image
 ```shell 
-cd src
-docker build -t couchbase-aspnet-minapi-quickstart -f Couchbase.TravelSample/Dockerfile .
+cd aspnet-minapi-quickstart-travelsample
+docker build -t couchbase-aspnet-minapi-quickstart . 
 ```
 
   - Run the docker image
 ```shell 
-docker run -p 8080:80 couchbase-aspnet-minapi-quickstart
+cd aspnet-minapi-quickstart-travelsample
+docker run -p 8080:8080 couchbase-aspnet-minapi-quickstart
 ```
->**Note:** The application can now be reached on port 8080 of your local machine.
+
+You can access the backend API on http://localhost:8080/swagger/index.html
+
+>**Note:** Make the configuration changes inside appsettings.json file while running using docker.
 
 ### Checking the Application
 
@@ -94,7 +91,7 @@ Once the application starts, you can see the details of the application on the l
 
 ![Application Startup](app_startup.png)
 
-The application will run on port 8080 of your local machine (http://localhost:5021). You will find the Swagger documentation of the API if you go to the URL in your browser.
+The application will run on port 5021 of your local machine (http://localhost:5021/swagger/index.html). You will find the Swagger documentation of the API if you go to the URL in your browser.
 
 ![Swagger Documentation](swagger_documentation.png)
 
