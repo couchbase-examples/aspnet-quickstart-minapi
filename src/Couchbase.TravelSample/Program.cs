@@ -2,14 +2,18 @@ using Couchbase;
 using Microsoft.Extensions.Options;
 
 using Couchbase.Extensions.DependencyInjection;
+using Couchbase.KeyValue;
+using Couchbase.Management.Collections;
 using Couchbase.TravelSample.Models;
 using Microsoft.OpenApi.Models;
 
 using Route = Couchbase.TravelSample.Models.Route;
 
 var builder = WebApplication.CreateBuilder(args);
-
 const string devSpecificOriginsName = "_devAllowSpecificOrigins";
+
+//global pointer to inventory scope
+IScope? inventoryScope = null;
 
 // Add services to the container.
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
@@ -33,10 +37,11 @@ builder.Services.AddSwaggerGen(options =>
     });
 });
 
+var config = builder.Configuration.GetSection("Couchbase");
+
 //register the configuration for Couchbase and Dependency Injection Framework
 if (builder.Environment.EnvironmentName == "Testing")
 {
-    var config = builder.Configuration.GetSection("Couchbase");
     var connectionString = Environment.GetEnvironmentVariable("DB_CONN_STR");
     var username = Environment.GetEnvironmentVariable("DB_USERNAME");
     var password = Environment.GetEnvironmentVariable("DB_PASSWORD");
@@ -50,8 +55,8 @@ if (builder.Environment.EnvironmentName == "Testing")
 
 else
 {
-    builder.Services.Configure<CouchbaseConfig>(builder.Configuration.GetSection("Couchbase"));
-    builder.Services.AddCouchbase(builder.Configuration.GetSection("Couchbase"));
+    builder.Services.Configure<CouchbaseConfig>(config);
+    builder.Services.AddCouchbase(config);
 }
 
 builder.Services.AddHttpClient();
@@ -87,11 +92,12 @@ lifetime.ApplicationStarted.Register(async () =>
 
     const string scopeName = "inventory";
     
-    // Check if "inventory" scope exists in "travel-sample" bucket
-    var allScopes = await bucket.Collections.GetAllScopesAsync();
-    var containsInventoryScope = allScopes.Any(scope => scope.Name == scopeName);
-    if (!containsInventoryScope)
+    // get inventory scope
+    try
     {
+        inventoryScope = bucket.Scope(scopeName);
+    }
+    catch (Exception){
         Console.WriteLine("Warning: The 'inventory' scope does not exist in 'travel-sample' bucket.");
     }
 });
@@ -121,8 +127,8 @@ app.MapGet("/api/v1/airport/list", async (string? country, int? limit, int? offs
             //get couchbase config values from appsettings.json 
             var couchbaseConfig = options.Value;
 
-            //get the cluster provider to run a query from
-            var cluster = await clusterProvider.GetClusterAsync();
+            //get the scope to run a query from
+            if (inventoryScope is not null){
 
             // Set default values for limit and offset if not provided by the user
             limit ??= 10; 
@@ -157,10 +163,15 @@ app.MapGet("/api/v1/airport/list", async (string? country, int? limit, int? offs
             queryParameters.Parameter("limit", limit);
             queryParameters.Parameter("offset", offset);
 
-            var results = await cluster.QueryAsync<Airport>(query, queryParameters);
+            var results = await inventoryScope.QueryAsync<Airport>(query, queryParameters);
             var items = await results.Rows.ToListAsync<Airport>();
 
             return items.Count == 0 ? Results.NotFound() : Results.Ok(items);
+            }
+            else
+            {
+                return Results.Problem("Scope not found");
+            }
         }
         catch (Exception ex)
         {
