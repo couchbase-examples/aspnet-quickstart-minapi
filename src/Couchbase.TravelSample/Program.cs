@@ -14,6 +14,7 @@ const string devSpecificOriginsName = "_devAllowSpecificOrigins";
 
 //global pointer to inventory scope
 IScope? inventoryScope = null;
+IBucket? bucket = null;
 
 // Add services to the container.
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
@@ -88,7 +89,7 @@ lifetime.ApplicationStarted.Register(async () =>
     // Retrieve configuration values from appsettings.json
     var bucketName = configuration["Couchbase:BucketName"];
     if (bucketName == null) return;
-    var bucket = await app.Services.GetRequiredService<IBucketProvider>().GetBucketAsync(bucketName);
+    bucket = await app.Services.GetRequiredService<IBucketProvider>().GetBucketAsync(bucketName);
 
     const string scopeName = "inventory";
     
@@ -141,7 +142,7 @@ app.MapGet("/api/v1/airport/list", async (string? country, int? limit, int? offs
                               airport.geo,
                               airport.icao,
                               airport.tz
-                 FROM `{couchbaseConfig.BucketName}`.`{couchbaseConfig.ScopeName}`.`airport` AS airport
+                 FROM airport AS airport
                  ORDER BY airport.airportname
                  LIMIT $limit
                  OFFSET $offset" : $@"SELECT airport.airportname,
@@ -151,7 +152,7 @@ app.MapGet("/api/v1/airport/list", async (string? country, int? limit, int? offs
                           airport.geo,
                           airport.icao,
                           airport.tz
-             FROM `{couchbaseConfig.BucketName}`.`{couchbaseConfig.ScopeName}`.`airport` AS airport
+             FROM airport AS airport
              WHERE lower(airport.country) = $country
              ORDER BY airport.airportname
              LIMIT $limit
