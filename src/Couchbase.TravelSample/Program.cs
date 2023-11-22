@@ -1,9 +1,7 @@
 using Couchbase;
-using Microsoft.Extensions.Options;
 
 using Couchbase.Extensions.DependencyInjection;
 using Couchbase.KeyValue;
-using Couchbase.Management.Collections;
 using Couchbase.TravelSample.Models;
 using Microsoft.OpenApi.Models;
 
@@ -15,6 +13,10 @@ const string devSpecificOriginsName = "_devAllowSpecificOrigins";
 //global pointer to inventory scope
 IScope? inventoryScope = null;
 IBucket? bucket = null;
+
+const string airportCollection = "airport";
+const string airlineCollection = "airline";
+const string routeCollection = "route";
 
 // Add services to the container.
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
@@ -81,8 +83,7 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
-var lifetime = app.Services.GetRequiredService<IHostApplicationLifetime>();
-lifetime.ApplicationStarted.Register(async () =>
+app.Services.GetRequiredService<IHostApplicationLifetime>().ApplicationStarted.Register(async () =>
 {
     var configuration = builder.Configuration;
 
@@ -96,7 +97,7 @@ lifetime.ApplicationStarted.Register(async () =>
     // get inventory scope
     try
     {
-        inventoryScope = bucket.Scope(scopeName);
+        inventoryScope = await bucket.ScopeAsync(scopeName);
     }
     catch (Exception){
         Console.WriteLine("Warning: The 'inventory' scope does not exist in 'travel-sample' bucket.");
@@ -121,21 +122,17 @@ app.Lifetime.ApplicationStopped.Register(() =>
 
 app.UseHttpsRedirection();
 
-app.MapGet("/api/v1/airport/list", async (string? country, int? limit, int? offset, IClusterProvider clusterProvider, IOptions<CouchbaseConfig> options) =>
+app.MapGet("/api/v1/airport/list", async (string? country, int? limit, int? offset) =>
     {
         try
         {
-            //get couchbase config values from appsettings.json 
-            var couchbaseConfig = options.Value;
-
-            //get the scope to run a query from
             if (inventoryScope is not null){
 
-            // Set default values for limit and offset if not provided by the user
-            limit ??= 10; 
-            offset ??= 0;
+                // Set default values for limit and offset if not provided by the user
+                limit ??= 10; 
+                offset ??= 0;
 
-            var query = string.IsNullOrEmpty(country) ? $@"SELECT airport.airportname,
+                var query = string.IsNullOrEmpty(country) ? $@"SELECT airport.airportname,
                               airport.city,
                               airport.country,
                               airport.faa,
@@ -158,16 +155,16 @@ app.MapGet("/api/v1/airport/list", async (string? country, int? limit, int? offs
              LIMIT $limit
              OFFSET $offset";
 
-            //setup parameters
-            var queryParameters = new Couchbase.Query.QueryOptions();
-            queryParameters.Parameter("country", string.IsNullOrEmpty(country) ? "" : country.ToLower());
-            queryParameters.Parameter("limit", limit);
-            queryParameters.Parameter("offset", offset);
+                //setup parameters
+                var queryParameters = new Couchbase.Query.QueryOptions();
+                queryParameters.Parameter("country", string.IsNullOrEmpty(country) ? "" : country.ToLower());
+                queryParameters.Parameter("limit", limit);
+                queryParameters.Parameter("offset", offset);
 
-            var results = await inventoryScope.QueryAsync<Airport>(query, queryParameters);
-            var items = await results.Rows.ToListAsync<Airport>();
+                var results = await inventoryScope.QueryAsync<Airport>(query, queryParameters);
+                var items = await results.Rows.ToListAsync();
 
-            return items.Count == 0 ? Results.NotFound() : Results.Ok(items);
+                return items.Count == 0 ? Results.NotFound() : Results.Ok(items);
             }
             else
             {
@@ -178,13 +175,11 @@ app.MapGet("/api/v1/airport/list", async (string? country, int? limit, int? offs
         {
             return Results.Problem(ex.Message);
         }
-        
-        return Results.NotFound();
     })
     .WithTags("Airport")
     .WithOpenApi(operation => new(operation)
     {
-        Description = "Get list of Airports. Optionally, you can filter the list by Country.\n\nThis provides an example of using a SQL++ query in Couchbase to fetch a list of documents matching the specified criteria.\n\nCode: `Couchbase.TravelSample/Program.cs`",
+        Description = "Get list of Airports. Optionally, you can filter the list by Country.\n\nThis provides an example of using a SQL++ query in Couchbase to fetch a list of documents matching the specified criteria.",
         Parameters = new List<OpenApiParameter>
         {
             new OpenApiParameter
@@ -212,53 +207,50 @@ app.MapGet("/api/v1/airport/list", async (string? country, int? limit, int? offs
     });
 
 
-app.MapGet("/api/v1/airport/direct-connections", async (string airport, int? limit, int? offset, IClusterProvider clusterProvider, IOptions<CouchbaseConfig> options) =>
+app.MapGet("/api/v1/airport/direct-connections", async (string airport, int? limit, int? offset) =>
     {
         try
         {
-            //get couchbase config values from appsettings.json 
-            var couchbaseConfig = options.Value;
+            if (inventoryScope is not null)
+            {
+                // Set default values for limit and offset if not provided by the user
+                limit ??= 10;
+                offset ??= 0;
 
-            //get the cluster provider to run a query from
-            var cluster = await clusterProvider.GetClusterAsync();
-            
-            // Set default values for limit and offset if not provided by the user
-            limit ??= 10; 
-            offset ??= 0;
-
-            var query = $@"SELECT DISTINCT route.destinationairport
-                 FROM `{couchbaseConfig.BucketName}`.`{couchbaseConfig.ScopeName}`.`airport` AS airport
-                 JOIN `{couchbaseConfig.BucketName}`.`{couchbaseConfig.ScopeName}`.`route` AS route
+                const string query = $@"SELECT DISTINCT route.destinationairport
+                 FROM airport AS airport
+                 JOIN route AS route
                  ON route.sourceairport = airport.faa
                  WHERE lower(airport.faa) = $airport AND route.stops = 0
                  ORDER BY route.destinationairport
                  LIMIT $limit
                  OFFSET $offset";
-            
-            //setup parameters
-            var queryParameters = new Couchbase.Query.QueryOptions();
-            queryParameters.Parameter("airport", airport.ToLower());
-            queryParameters.Parameter("limit", limit);
-            queryParameters.Parameter("offset", offset);
 
-            var results = await cluster.QueryAsync<DestinationAirport>(query, queryParameters);
-            var items = await results.Rows.ToListAsync();
+                //setup parameters
+                var queryParameters = new Couchbase.Query.QueryOptions();
+                queryParameters.Parameter("airport", airport.ToLower());
+                queryParameters.Parameter("limit", limit);
+                queryParameters.Parameter("offset", offset);
 
-            if (items.Count == 0)
-                return Results.NotFound();
+                var results = await inventoryScope.QueryAsync<DestinationAirport>(query, queryParameters);
+                var items = await results.Rows.ToListAsync();
 
-            return Results.Ok(items);
+                return items.Count == 0 ? Results.NotFound() : Results.Ok(items);
+            }
+            else
+            {
+                return Results.Problem("Scope not found");
+            }
         }
         catch (Exception ex)
         {
             return Results.Problem(ex.Message);
         }
-        return Results.NotFound();
     })
     .WithTags("Airport")
     .WithOpenApi(operation => new(operation)
     {
-        Description = "Get Direct Connections from specified Airport.\n\nThis provides an example of using a SQL++ query in Couchbase to fetch a list of documents matching the specified criteria.\n\nCode: `Couchbase.TravelSample/Program.cs`",
+        Description = "Get Direct Connections from specified Airport.\n\nThis provides an example of using a SQL++ query in Couchbase to fetch a list of documents matching the specified criteria.",
         Parameters = new List<OpenApiParameter>
         {
             new OpenApiParameter
@@ -286,26 +278,28 @@ app.MapGet("/api/v1/airport/direct-connections", async (string airport, int? lim
     });
 
 
-app.MapGet("/api/v1/airport/{id}", async (string id, IBucketProvider bucketProvider, IOptions<CouchbaseConfig> options) =>
+app.MapGet("/api/v1/airport/{id}", async (string id) =>
     {
         try
         {
-            //get couchbase config values from appsettings.json 
-            var couchbaseConfig = options.Value;
-
-            //get the bucket, scope, and collection
-            var bucket = await bucketProvider.GetBucketAsync(couchbaseConfig.BucketName);
-            var scope = bucket.Scope(couchbaseConfig.ScopeName);
-            var collection = scope.Collection("airport");
-
-            //get the document from the bucket using the id
-            var result = await collection.GetAsync(id);
-
-            //validate we have a document
-            var resultAirports = result.ContentAs<Airport>();
-            if (resultAirports != null)
+            if (inventoryScope is not null)
             {
-                return Results.Ok(resultAirports);
+                //get the collection
+                var collection = inventoryScope.Collection(airportCollection);
+
+                //get the document from the bucket using the id
+                var result = await collection.GetAsync(id);
+
+                //validate we have a document
+                var resultAirports = result.ContentAs<Airport>();
+                if (resultAirports != null)
+                {
+                    return Results.Ok(resultAirports);
+                }
+            }
+            else
+            {
+                return Results.Problem("Scope not found");
             }
         }
         catch (Couchbase.Core.Exceptions.KeyValue.DocumentNotFoundException)
@@ -322,7 +316,7 @@ app.MapGet("/api/v1/airport/{id}", async (string id, IBucketProvider bucketProvi
     .WithTags("Airport")
     .WithOpenApi(operation => new(operation)
     {
-        Description = "Get Airport with specified ID.\n\nThis provides an example of using Key Value operations in Couchbase to get a document with specified ID.\n\nCode: `Couchbase.TravelSample/Program.cs`",
+        Description = "Get Airport with specified ID.\n\nThis provides an example of using Key Value operations in Couchbase to get a document with specified ID.",
         Parameters = new List<OpenApiParameter>
         {
             new OpenApiParameter
@@ -335,67 +329,29 @@ app.MapGet("/api/v1/airport/{id}", async (string id, IBucketProvider bucketProvi
         }
     });
 
-app.MapPost("/api/v1/airport/{id}", async (string id, AirportCreateRequestCommand request, IBucketProvider bucketProvider, IOptions<CouchbaseConfig> options) =>
+app.MapPost("/api/v1/airport/{id}", async (string id, AirportCreateRequestCommand request) =>
     {
-        //get couchbase config values from appsettings.json 
-        var couchbaseConfig = options.Value;
-
-        //get the bucket, scope, and collection
-        var bucket = await bucketProvider.GetBucketAsync(couchbaseConfig.BucketName);
-        var scope = bucket.Scope(couchbaseConfig.ScopeName);
-        var collection = scope.Collection("airport");
-
-        //get airport from request
-        var airport = request.GetAirport();
-
-        //save document
-        await collection.InsertAsync(id, airport);
-        return Results.Created($"/api/v1/airport/{id}", airport);
-    })
-    .WithTags("Airport")
-    .WithOpenApi(operation => new(operation)
-    {
-        Description = "Create Airport with specified ID.\n\nThis provides an example of using Key Value operations in Couchbase to create a new document with a specified ID.\n\nCode: `Couchbase.TravelSample/Program.cs`",
-        Parameters = new List<OpenApiParameter>
+        if (inventoryScope is not null)
         {
-            new OpenApiParameter
-            {
-                Name = "id",
-                In = ParameterLocation.Path,
-                Description = "Airport ID like airport_1273",
-                Required = true
-            }
-        }
-    });
+            //get the collection
+            var collection = inventoryScope.Collection(airportCollection);
 
-app.MapPut("/api/v1/airport/{id}", async (string id, AirportCreateRequestCommand request, IBucketProvider bucketProvider, IOptions<CouchbaseConfig> options) =>
-    {
-        //get couchbase config values from appsettings.json 
-        var couchbaseConfig = options.Value;
+            //get airport from request
+            var airport = request.GetAirport();
 
-        //get the bucket, scope, and collection
-        var bucket = await bucketProvider.GetBucketAsync(couchbaseConfig.BucketName);
-        var scope = bucket.Scope(couchbaseConfig.ScopeName);
-        var collection = scope.Collection("airport");
-
-        //get current airport from the database
-        var result = await collection.GetAsync(id);
-        if (result != null)
-        {
-            var airport = result.ContentAs<Airport>();
-            var updateResult = await collection.ReplaceAsync<Airport>(id, request.GetAirport());
-
-            return Results.Ok(request);
+            //save document
+            await collection.InsertAsync(id, airport);
+            return Results.Created($"/api/v1/airport/{id}", airport);
         }
         else
         {
-            return Results.NotFound();
+            return Results.Problem("Scope not found");
         }
     })
     .WithTags("Airport")
     .WithOpenApi(operation => new(operation)
     {
-        Description = "Update Airport with specified ID.\n\nThis provides an example of using Key Value operations in Couchbase to upsert a document with specified ID.\n\nCode: `Couchbase.TravelSample/Program.cs`",
+        Description = "Create Airport with specified ID.\n\nThis provides an example of using Key Value operations in Couchbase to create a new document with a specified ID.",
         Parameters = new List<OpenApiParameter>
         {
             new OpenApiParameter
@@ -408,35 +364,34 @@ app.MapPut("/api/v1/airport/{id}", async (string id, AirportCreateRequestCommand
         }
     });
 
-app.MapDelete("/api/v1/airport/{id}", async(string id, IBucketProvider bucketProvider, IOptions < CouchbaseConfig > options) => 
+app.MapPut("/api/v1/airport/{id}", async (string id, AirportCreateRequestCommand request) =>
     {
-        //get couchbase config values from appsettings.json 
-        var couchbaseConfig = options.Value;
-
-        //get the bucket, scope, and collection
-        var bucket = await bucketProvider.GetBucketAsync(couchbaseConfig.BucketName);
-        var scope = bucket.Scope(couchbaseConfig.ScopeName);
-        var collection = scope.Collection("airport");
-
-        //get the document from the bucket using the id
-        var result = await collection.GetAsync(id);
-
-        //validate we have a document
-        var resultAirport = result.ContentAs<Airport>();
-        if (resultAirport != null)
+        if (inventoryScope is not null)
         {
-            await collection.RemoveAsync(id);
-            return Results.Ok(id);
+            //get the collection
+            var collection = inventoryScope.Collection(airportCollection);
+
+            //get current airport from the database and update it
+            if (await collection.GetAsync(id) is { } result)
+            {
+                result.ContentAs<Airport>();
+                await collection.ReplaceAsync(id, request.GetAirport());
+                return Results.Ok(request);
+            }
+            else
+            {
+                return Results.NotFound();
+            }
         }
         else
         {
-            return Results.NotFound();
+            return Results.Problem("Scope not found");
         }
     })
     .WithTags("Airport")
     .WithOpenApi(operation => new(operation)
     {
-        Description = "Delete Airport with specified ID.\n\nThis provides an example of using Key Value operations in Couchbase to delete a document with specified ID.\n\nCode: `Couchbase.TravelSample/Program.cs`",
+        Description = "Update Airport with specified ID.\n\nThis provides an example of using Key Value operations in Couchbase to upsert a document with specified ID.",
         Parameters = new List<OpenApiParameter>
         {
             new OpenApiParameter
@@ -449,63 +404,105 @@ app.MapDelete("/api/v1/airport/{id}", async(string id, IBucketProvider bucketPro
         }
     });
 
-app.MapGet("/api/v1/airline/list", async (string? country, int? limit, int? offset, IClusterProvider clusterProvider, IOptions<CouchbaseConfig> options) =>
+app.MapDelete("/api/v1/airport/{id}", async(string id) => 
+    {
+        if (inventoryScope is not null)
+        {
+            //get the collection
+            var collection = inventoryScope.Collection(airportCollection);
+
+            //get the document from the bucket using the id
+            var result = await collection.GetAsync(id);
+
+            //validate we have a document
+            var resultAirport = result.ContentAs<Airport>();
+            if (resultAirport != null)
+            {
+                await collection.RemoveAsync(id);
+                return Results.Ok(id);
+            }
+            else
+            {
+                return Results.NotFound();
+            }
+        }
+        else
+        {
+            return Results.Problem("Scope not found");
+        }
+    })
+    .WithTags("Airport")
+    .WithOpenApi(operation => new(operation)
+    {
+        Description = "Delete Airport with specified ID.\n\nThis provides an example of using Key Value operations in Couchbase to delete a document with specified ID.",
+        Parameters = new List<OpenApiParameter>
+        {
+            new OpenApiParameter
+            {
+                Name = "id",
+                In = ParameterLocation.Path,
+                Description = "Airport ID like airport_1273",
+                Required = true
+            }
+        }
+    });
+
+app.MapGet("/api/v1/airline/list", async (string? country, int? limit, int? offset) =>
     {
         try
         {
-            //get couchbase config values from appsettings.json 
-            var couchbaseConfig = options.Value; 
+            if (inventoryScope is not null)
+            {
+                // Set default values for limit and offset if not provided by the user
+                limit ??= 10;
+                offset ??= 0;
 
-            //get the cluster provider to run a query from
-            var cluster = await clusterProvider.GetClusterAsync();
-            
-            // Set default values for limit and offset if not provided by the user
-            limit ??= 10; 
-            offset ??= 0;
-
-            var query = string.IsNullOrEmpty(country) ? $@"SELECT airline.callsign,
+                var query = string.IsNullOrEmpty(country)
+                    ? $@"SELECT airline.callsign,
                             airline.country,
                             airline.iata,
                             airline.icao,
                             airline.name
-                            FROM `{couchbaseConfig.BucketName}`.`{couchbaseConfig.ScopeName}`.`airline` AS airline
+                            FROM airline AS airline
                             ORDER BY airline.name
                             LIMIT $limit
-                            OFFSET $offset" : $@"SELECT airline.callsign,
+                            OFFSET $offset"
+                    : $@"SELECT airline.callsign,
                             airline.country,
                             airline.iata,
                             airline.icao,
                             airline.name
-                            FROM `{couchbaseConfig.BucketName}`.`{couchbaseConfig.ScopeName}`.`airline` AS airline
+                            FROM airline AS airline
                             WHERE lower(airline.country) = $country
                             ORDER BY airline.name
                             LIMIT $limit
                             OFFSET $offset";
 
-            //setup parameters
-            var queryParameters = new Couchbase.Query.QueryOptions();
-            queryParameters.Parameter("country", string.IsNullOrEmpty(country) ? "" : country.ToLower());
-            queryParameters.Parameter("limit", limit);
-            queryParameters.Parameter("offset", offset);
+                //setup parameters
+                var queryParameters = new Couchbase.Query.QueryOptions();
+                queryParameters.Parameter("country", string.IsNullOrEmpty(country) ? "" : country.ToLower());
+                queryParameters.Parameter("limit", limit);
+                queryParameters.Parameter("offset", offset);
 
-            var results = await cluster.QueryAsync<Airline>(query, queryParameters);
-            var items = await results.Rows.ToListAsync<Airline>();
+                var results = await inventoryScope.QueryAsync<Airline>(query, queryParameters);
+                var items = await results.Rows.ToListAsync();
 
-            if (items.Count == 0)
-                return Results.NotFound();
-
-            return Results.Ok(items);
+                return items.Count == 0 ? Results.NotFound() : Results.Ok(items);
+            }
+            else
+            {
+                return Results.Problem("Scope not found");
+            }
         }
         catch (Exception ex)
         {
             return Results.Problem(ex.Message);
         }
-        return Results.NotFound();
     })
     .WithTags("Airline")
     .WithOpenApi(operation => new(operation)
     {
-        Description = "Get list of Airlines. Optionally, you can filter the list by Country.\n\nThis provides an example of using SQL++ query in Couchbase to fetch a list of documents matching the specified criteria.\n\nCode: `Couchbase.TravelSample/Program.cs`",
+        Description = "Get list of Airlines. Optionally, you can filter the list by Country.\n\nThis provides an example of using SQL++ query in Couchbase to fetch a list of documents matching the specified criteria.",
         Parameters = new List<OpenApiParameter>
         {
             new OpenApiParameter
@@ -533,62 +530,58 @@ app.MapGet("/api/v1/airline/list", async (string? country, int? limit, int? offs
         
     });
 
-app.MapGet("/api/v1/airline/to-airport", async (string airport, int? limit, int? offset, IClusterProvider clusterProvider, IOptions<CouchbaseConfig> options) =>
+app.MapGet("/api/v1/airline/to-airport", async (string airport, int? limit, int? offset) =>
     {
         try
         {
-            //get couchbase config values from appsettings.json 
-            var couchbaseConfig = options.Value;
+            if (inventoryScope is not null)
+            {
+                // Set default values for limit and offset if not provided by the user
+                limit ??= 10;
+                offset ??= 0;
 
-            //get the cluster provider to run a query from
-            var cluster = await clusterProvider.GetClusterAsync();
-            
-            // Set default values for limit and offset if not provided by the user
-            limit ??= 10; 
-            offset ??= 0;
-
-            var query = $@"SELECT air.callsign,
+                var query = $@"SELECT air.callsign,
                                    air.country,
                                    air.iata,
                                    air.icao,
                                    air.name
                           FROM (
                             SELECT DISTINCT META(airline).id AS airlineId
-                            FROM `{couchbaseConfig.BucketName}`.`{couchbaseConfig.ScopeName}`.`route` AS route
-                            JOIN `{couchbaseConfig.BucketName}`.`{couchbaseConfig.ScopeName}`.`airline` AS airline
+                            FROM route AS route
+                            JOIN airline AS airline
                             ON route.airlineid = META(airline).id
                             WHERE lower(route.destinationairport) = $airport
                           ) AS SUBQUERY
-                          JOIN `{couchbaseConfig.BucketName}`.`{couchbaseConfig.ScopeName}`.`airline` AS air
+                          JOIN airline AS air
                           ON META(air).id = SUBQUERY.airlineId
                           LIMIT $limit
                           OFFSET $offset";
-            
-            //setup parameters
-            var queryParameters = new Couchbase.Query.QueryOptions();
-            queryParameters.Parameter("airport", airport.ToLower());
-            queryParameters.Parameter("limit", limit);
-            queryParameters.Parameter("offset", offset);
 
-            var results = await cluster.QueryAsync<Airline>(query, queryParameters);
-            var items = await results.Rows.ToListAsync<Airline>();
+                //setup parameters
+                var queryParameters = new Couchbase.Query.QueryOptions();
+                queryParameters.Parameter("airport", airport.ToLower());
+                queryParameters.Parameter("limit", limit);
+                queryParameters.Parameter("offset", offset);
 
-            if (items.Count == 0)
-                return Results.NotFound();
+                var results = await inventoryScope.QueryAsync<Airline>(query, queryParameters);
+                var items = await results.Rows.ToListAsync();
 
-            return Results.Ok(items);
+                return items.Count == 0 ? Results.NotFound() : Results.Ok(items);
+            }
+            else
+            {
+                return Results.Problem("Scope not found");
+            }
         }
         catch (Exception ex)
         {
             return Results.Problem(ex.Message);
         }
-
-        return Results.NotFound();
     })
     .WithTags("Airline")
     .WithOpenApi(operation => new(operation)
     {
-        Description = "Get Airlines flying to specified destination Airport.\n\nThis provides an example of using SQL++ query in Couchbase to fetch a list of documents matching the specified criteria.\n\nCode: `Couchbase.TravelSample/Program.cs`",
+        Description = "Get Airlines flying to specified destination Airport.\n\nThis provides an example of using SQL++ query in Couchbase to fetch a list of documents matching the specified criteria.",
         Parameters = new List<OpenApiParameter>
         {
             new OpenApiParameter
@@ -615,26 +608,28 @@ app.MapGet("/api/v1/airline/to-airport", async (string airport, int? limit, int?
         }
     });
 
-app.MapGet("/api/v1/airline/{id}", async (string id, IBucketProvider bucketProvider, IOptions<CouchbaseConfig> options) =>
+app.MapGet("/api/v1/airline/{id}", async (string id) =>
     {
         try
         {
-            //get couchbase config values from appsettings.json 
-            var couchbaseConfig = options.Value;
-
-            //get the bucket, scope, and collection
-            var bucket = await bucketProvider.GetBucketAsync(couchbaseConfig.BucketName);
-            var scope = bucket.Scope(couchbaseConfig.ScopeName);
-            var collection = scope.Collection("airline");
-
-            //get the document from the bucket using the id
-            var result = await collection.GetAsync(id);
-
-            //validate we have a document
-            var resultAirlines = result.ContentAs<Airline>();
-            if (resultAirlines != null)
+            if (inventoryScope is not null)
             {
-                return Results.Ok(resultAirlines);
+                //get the collection
+                var collection = inventoryScope.Collection(airlineCollection);
+
+                //get the document from the bucket using the id
+                var result = await collection.GetAsync(id);
+
+                //validate we have a document
+                var resultAirlines = result.ContentAs<Airline>();
+                if (resultAirlines != null)
+                {
+                    return Results.Ok(resultAirlines);
+                }
+            }
+            else
+            {
+                return Results.Problem("Scope Not Found");
             }
         }
         catch (Couchbase.Core.Exceptions.KeyValue.DocumentNotFoundException)
@@ -651,7 +646,7 @@ app.MapGet("/api/v1/airline/{id}", async (string id, IBucketProvider bucketProvi
     .WithTags("Airline")
     .WithOpenApi(operation => new(operation)
     {
-        Description = "Get Airline with specified ID.\n\nThis provides an example of using Key Value operations in Couchbase to get a document with specified ID.\n\nCode: `Couchbase.TravelSample/Program.cs`",
+        Description = "Get Airline with specified ID.\n\nThis provides an example of using Key Value operations in Couchbase to get a document with specified ID.",
         Parameters = new List<OpenApiParameter>
         {
             new OpenApiParameter
@@ -664,67 +659,29 @@ app.MapGet("/api/v1/airline/{id}", async (string id, IBucketProvider bucketProvi
         }
     });
 
-app.MapPost("/api/v1/airline/{id}", async (string id, AirlineCreateRequestCommand request, IBucketProvider bucketProvider, IOptions<CouchbaseConfig> options) =>
+app.MapPost("/api/v1/airline/{id}", async (string id, AirlineCreateRequestCommand request) =>
     {
-        //get couchbase config values from appsettings.json 
-        var couchbaseConfig = options.Value;
-
-        //get the bucket, scope, and collection
-        var bucket = await bucketProvider.GetBucketAsync(couchbaseConfig.BucketName);
-        var scope = bucket.Scope(couchbaseConfig.ScopeName);
-        var collection = scope.Collection("airline");
-
-        //get airline from request
-        var airline = request.GetAirline();
-
-        //save document
-        await collection.InsertAsync(id, airline);
-        return Results.Created($"/api/v1/airline/{id}", airline);
-    })
-    .WithTags("Airline")
-    .WithOpenApi(operation => new(operation)
-    {
-        Description = "Create Airline with specified ID.\n\nThis provides an example of using Key Value operations in Couchbase to create a new document with a specified ID.\n\nCode: `Couchbase.TravelSample/Program.cs`",
-        Parameters = new List<OpenApiParameter>
+        if (inventoryScope is not null)
         {
-            new OpenApiParameter
-            {
-                Name = "id",
-                In = ParameterLocation.Path,
-                Description = "Airline ID like airline_10",
-                Required = true
-            }
-        }
-    });
+            //get the collection
+            var collection = inventoryScope.Collection(airlineCollection);
 
-app.MapPut("/api/v1/airline/{id}", async (string id, AirlineCreateRequestCommand request, IBucketProvider bucketProvider, IOptions<CouchbaseConfig> options) =>
-    {
-        //get couchbase config values from appsettings.json 
-        var couchbaseConfig = options.Value;
+            //get airline from request
+            var airline = request.GetAirline();
 
-        //get the bucket, scope, and collection
-        var bucket = await bucketProvider.GetBucketAsync(couchbaseConfig.BucketName);
-        var scope = bucket.Scope(couchbaseConfig.ScopeName);
-        var collection = scope.Collection("airline");
-
-        //get current airline from the database
-        var result = await collection.GetAsync(id);
-        if (result != null)
-        {
-            var airline = result.ContentAs<Airline>();
-            var updateResult = await collection.ReplaceAsync<Airline>(id, request.GetAirline());
-
-            return Results.Ok(request);
+            //save document
+            await collection.InsertAsync(id, airline);
+            return Results.Created($"/api/v1/airline/{id}", airline);
         }
         else
         {
-            return Results.NotFound();
+            return Results.Problem("Scope Not Found");
         }
     })
     .WithTags("Airline")
     .WithOpenApi(operation => new(operation)
     {
-        Description = "Update Airline with specified ID.\n\nThis provides an example of using Key Value operations in Couchbase to upsert a document with specified ID.\n\nCode: `Couchbase.TravelSample/Program.cs`",
+        Description = "Create Airline with specified ID.\n\nThis provides an example of using Key Value operations in Couchbase to create a new document with a specified ID.",
         Parameters = new List<OpenApiParameter>
         {
             new OpenApiParameter
@@ -737,35 +694,34 @@ app.MapPut("/api/v1/airline/{id}", async (string id, AirlineCreateRequestCommand
         }
     });
 
-app.MapDelete("/api/v1/airline/{id}", async(string id, IBucketProvider bucketProvider, IOptions < CouchbaseConfig > options) => 
+app.MapPut("/api/v1/airline/{id}", async (string id, AirlineCreateRequestCommand request) =>
     {
-        //get couchbase config values from appsettings.json 
-        var couchbaseConfig = options.Value;
-
-        //get the bucket, scope, and collection
-        var bucket = await bucketProvider.GetBucketAsync(couchbaseConfig.BucketName);
-        var scope = bucket.Scope(couchbaseConfig.ScopeName);
-        var collection = scope.Collection("airline");
-
-        //get the document from the bucket using the id
-        var result = await collection.GetAsync(id);
-
-        //validate we have a document
-        var resultAirline = result.ContentAs<Airline>();
-        if ( resultAirline != null)
+        if (inventoryScope is not null)
         {
-            await collection.RemoveAsync(id);
-            return Results.Ok(id);
+            //get the collection
+            var collection = inventoryScope.Collection(airlineCollection);
+
+            //get current airline from the database and update it
+            if (await collection.GetAsync(id) is { } result)
+            {
+                result.ContentAs<Airline>();
+                await collection.ReplaceAsync(id, request.GetAirline());
+                return Results.Ok(request);
+            }
+            else
+            {
+                return Results.NotFound();
+            }
         }
         else
         {
-            return Results.NotFound();
+            return Results.Problem("Scope Not Found");
         }
     })
     .WithTags("Airline")
     .WithOpenApi(operation => new(operation)
     {
-        Description = "Delete Airline with specified ID.\n\nThis provides an example of using Key Value operations in Couchbase to delete a document with specified ID.\n\nCode: `Couchbase.TravelSample/Program.cs`",
+        Description = "Update Airline with specified ID.\n\nThis provides an example of using Key Value operations in Couchbase to upsert a document with specified ID.",
         Parameters = new List<OpenApiParameter>
         {
             new OpenApiParameter
@@ -778,26 +734,71 @@ app.MapDelete("/api/v1/airline/{id}", async(string id, IBucketProvider bucketPro
         }
     });
 
-app.MapGet("/api/v1/route/{id}", async (string id, IBucketProvider bucketProvider, IOptions<CouchbaseConfig> options) =>
+app.MapDelete("/api/v1/airline/{id}", async(string id) => 
     {
-        try
+        if (inventoryScope is not null)
         {
-            //get couchbase config values from appsettings.json 
-            var couchbaseConfig = options.Value;
-
-            //get the bucket, scope, and collection
-            var bucket = await bucketProvider.GetBucketAsync(couchbaseConfig.BucketName);
-            var scope = bucket.Scope(couchbaseConfig.ScopeName);
-            var collection = scope.Collection("route");
+            //get the collection
+            var collection = inventoryScope.Collection(airlineCollection);
 
             //get the document from the bucket using the id
             var result = await collection.GetAsync(id);
 
             //validate we have a document
-            var resultAirlines = result.ContentAs<Route>();
-            if (resultAirlines != null)
+            var resultAirline = result.ContentAs<Airline>();
+            if ( resultAirline != null)
             {
-                return Results.Ok(resultAirlines);
+                await collection.RemoveAsync(id);
+                return Results.Ok(id);
+            }
+            else
+            {
+                return Results.NotFound();
+            }
+        }
+        else
+        {
+            return Results.Problem("Scope Not Found");
+        }
+    })
+    .WithTags("Airline")
+    .WithOpenApi(operation => new(operation)
+    {
+        Description = "Delete Airline with specified ID.\n\nThis provides an example of using Key Value operations in Couchbase to delete a document with specified ID.",
+        Parameters = new List<OpenApiParameter>
+        {
+            new OpenApiParameter
+            {
+                Name = "id",
+                In = ParameterLocation.Path,
+                Description = "Airline ID like airline_10",
+                Required = true
+            }
+        }
+    });
+
+app.MapGet("/api/v1/route/{id}", async (string id) =>
+    {
+        try
+        {
+            if (inventoryScope is not null)
+            {
+                //get the collection
+                var collection = inventoryScope.Collection(routeCollection);
+
+                //get the document from the bucket using the id
+                var result = await collection.GetAsync(id);
+
+                //validate we have a document
+                var resultAirlines = result.ContentAs<Route>();
+                if (resultAirlines != null)
+                {
+                    return Results.Ok(resultAirlines);
+                }
+            }
+            else
+            {
+                return Results.Problem("Scope Not Found");
             }
         }
         catch (Couchbase.Core.Exceptions.KeyValue.DocumentNotFoundException)
@@ -814,7 +815,7 @@ app.MapGet("/api/v1/route/{id}", async (string id, IBucketProvider bucketProvide
     .WithTags("Route")
     .WithOpenApi(operation => new(operation)
     {
-        Description = "Get Route with specified ID.\n\nThis provides an example of using Key Value operations in Couchbase to get a document with specified ID.\n\nCode: `Couchbase.TravelSample/Program.cs`",
+        Description = "Get Route with specified ID.\n\nThis provides an example of using Key Value operations in Couchbase to get a document with specified ID.",
         Parameters = new List<OpenApiParameter>
         {
             new OpenApiParameter
@@ -827,67 +828,29 @@ app.MapGet("/api/v1/route/{id}", async (string id, IBucketProvider bucketProvide
         }
     });
 
-app.MapPost("/api/v1/route/{id}", async (string id, RouteCreateRequestCommand request, IBucketProvider bucketProvider, IOptions<CouchbaseConfig> options) =>
+app.MapPost("/api/v1/route/{id}", async (string id, RouteCreateRequestCommand request) =>
     {
-        //get couchbase config values from appsettings.json 
-        var couchbaseConfig = options.Value;
-
-        //get the bucket, scope, and collection
-        var bucket = await bucketProvider.GetBucketAsync(couchbaseConfig.BucketName);
-        var scope = bucket.Scope(couchbaseConfig.ScopeName);
-        var collection = scope.Collection("route");
-
-        //get route from request
-        var route = request.GetRoute();
-
-        //save document
-        await collection.InsertAsync(id, route);
-        return Results.Created($"/api/v1/route/{id}", route);
-    })
-    .WithTags("Route")
-    .WithOpenApi(operation => new(operation)
-    {
-        Description = "Create Route with specified ID.\n\nThis provides an example of using Key Value operations in Couchbase to create a new document with a specified ID.\n\nCode: `Couchbase.TravelSample/Program.cs`",
-        Parameters = new List<OpenApiParameter>
+        if (inventoryScope is not null)
         {
-            new OpenApiParameter
-            {
-                Name = "id",
-                In = ParameterLocation.Path,
-                Description = "Route ID like route_10000",
-                Required = true
-            }
-        }
-    });
+            //get the collection
+            var collection = inventoryScope.Collection(routeCollection);
 
-app.MapPut("/api/v1/route/{id}", async (string id,RouteCreateRequestCommand request, IBucketProvider bucketProvider, IOptions<CouchbaseConfig> options) =>
-    {
-        //get couchbase config values from appsettings.json 
-        var couchbaseConfig = options.Value;
+            //get route from request
+            var route = request.GetRoute();
 
-        //get the bucket, scope, and collection
-        var bucket = await bucketProvider.GetBucketAsync(couchbaseConfig.BucketName);
-        var scope = bucket.Scope(couchbaseConfig.ScopeName);
-        var collection = scope.Collection("route");
-
-        //get current route from the database
-        var result = await collection.GetAsync(id);
-        if (result != null)
-        {
-            var route = result.ContentAs<Route>();
-            var updateResult = await collection.ReplaceAsync<Route>(id, request.GetRoute());
-
-            return Results.Ok(request);
+            //save document
+            await collection.InsertAsync(id, route);
+            return Results.Created($"/api/v1/route/{id}", route);
         }
         else
         {
-            return Results.NotFound();
+            return Results.Problem("Scope Not Found");
         }
     })
     .WithTags("Route")
     .WithOpenApi(operation => new(operation)
     {
-        Description = "Update Route with specified ID.\n\nThis provides an example of using Key Value operations in Couchbase to upsert a document with specified ID.\n\nCode: `Couchbase.TravelSample/Program.cs`",
+        Description = "Create Route with specified ID.\n\nThis provides an example of using Key Value operations in Couchbase to create a new document with a specified ID.",
         Parameters = new List<OpenApiParameter>
         {
             new OpenApiParameter
@@ -900,36 +863,78 @@ app.MapPut("/api/v1/route/{id}", async (string id,RouteCreateRequestCommand requ
         }
     });
 
-app.MapDelete("/api/v1/route/{id}", async(string id, IBucketProvider bucketProvider, IOptions < CouchbaseConfig > options) => 
+app.MapPut("/api/v1/route/{id}", async (string id,RouteCreateRequestCommand request) =>
     {
-
-        //get couchbase config values from appsettings.json 
-        var couchbaseConfig = options.Value;
-
-        //get the bucket, scope, and collection
-        var bucket = await bucketProvider.GetBucketAsync(couchbaseConfig.BucketName);
-        var scope = bucket.Scope(couchbaseConfig.ScopeName);
-        var collection = scope.Collection("route");
-
-        //get the document from the bucket using the id
-        var result = await collection.GetAsync(id);
-
-        //validate we have a document
-        var resultRoute = result.ContentAs<Route>();
-        if ( resultRoute != null)
+        if (inventoryScope is not null)
         {
-            await collection.RemoveAsync(id);
-            return Results.Ok(id);
+            //get the collection
+            var collection = inventoryScope.Collection(routeCollection);
+
+            //get current route from the database and update it
+            if (await collection.GetAsync(id) is { } result)
+            {
+                result.ContentAs<Route>();
+                await collection.ReplaceAsync(id, request.GetRoute());
+                return Results.Ok(request);
+            }
+            else
+            {
+                return Results.NotFound();
+            } 
         }
         else
         {
-            return Results.NotFound();
+            return Results.Problem("Scope Not Found");
         }
+        
     })
     .WithTags("Route")
     .WithOpenApi(operation => new(operation)
     {
-        Description = "Delete Route with specified ID.\n\nThis provides an example of using Key Value operations in Couchbase to delete a document with specified ID.\n\nCode: `Couchbase.TravelSample/Program.cs`",
+        Description = "Update Route with specified ID.\n\nThis provides an example of using Key Value operations in Couchbase to upsert a document with specified ID.",
+        Parameters = new List<OpenApiParameter>
+        {
+            new OpenApiParameter
+            {
+                Name = "id",
+                In = ParameterLocation.Path,
+                Description = "Route ID like route_10000",
+                Required = true
+            }
+        }
+    });
+
+app.MapDelete("/api/v1/route/{id}", async(string id) => 
+    {
+        if (inventoryScope is not null)
+        {
+            var collection = inventoryScope.Collection(routeCollection);
+
+            //get the document from the bucket using the id
+            var result = await collection.GetAsync(id);
+
+            //validate we have a document
+            var resultRoute = result.ContentAs<Route>();
+            if ( resultRoute != null)
+            {
+                await collection.RemoveAsync(id);
+                return Results.Ok(id);
+            }
+            else
+            {
+                return Results.NotFound();
+            }
+        }
+        else
+        {
+            return Results.Problem("Scope Not Found");
+        }
+     
+    })
+    .WithTags("Route")
+    .WithOpenApi(operation => new(operation)
+    {
+        Description = "Delete Route with specified ID.\n\nThis provides an example of using Key Value operations in Couchbase to delete a document with specified ID.",
         Parameters = new List<OpenApiParameter>
         {
             new OpenApiParameter
@@ -946,5 +951,5 @@ app.Run();
 
 // required for integration testing from asp.net
 // https://docs.microsoft.com/en-us/aspnet/core/test/integration-tests?view=aspnetcore-7.0
-public partial class Program { }
+public abstract partial class Program { }
 
