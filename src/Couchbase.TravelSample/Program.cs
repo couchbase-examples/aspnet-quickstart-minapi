@@ -25,7 +25,7 @@ builder.Services.AddSwaggerGen(options =>
     options.SwaggerDoc("v1", new OpenApiInfo
     {
         Version = "1.0",
-        Title = "Quickstart in Couchbase with C# and ASP.NET Minimum API",
+        Title = "Quickstart in Couchbase with C# and ASP.NET Minimal API",
         Description = "A quickstart API using C# and ASP.NET with Couchbase and travel-sample data. \n\n"
                       + "We have a visual representation of the API documentation using Swagger which allows you to interact with the API's endpoints directly through the browser. It provides a clear view of the API including endpoints, HTTP methods, request parameters, and response objects.\n\n"
                       + "Click on an individual endpoint to expand it and see detailed information. This includes the endpoint's description, possible response status codes, and the request parameters it accepts.\n\n"
