@@ -1,4 +1,3 @@
-using System.Data;
 using FluentValidation;
 
 namespace Couchbase.TravelSample.Models;

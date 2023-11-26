@@ -43,7 +43,6 @@ builder.Services.AddValidatorsFromAssemblyContaining(typeof(AirportCreateRequest
 builder.Services.AddValidatorsFromAssemblyContaining(typeof(AirlineCreateRequestCommandValidator));
 builder.Services.AddValidatorsFromAssemblyContaining(typeof(RouteCreateRequestCommandValidator));
 
-
 var config = builder.Configuration.GetSection("Couchbase");
 
 //register the configuration for Couchbase and Dependency Injection Framework
@@ -84,8 +83,6 @@ builder.Services.AddCors(options =>
                 .AllowCredentials();
         });
 });
-
-
 
 var app = builder.Build();
 
@@ -223,7 +220,6 @@ app.MapGet("/api/v1/airport/list", async (string? country, int? limit, int? offs
         }
     });
 
-
 app.MapGet("/api/v1/airport/direct-connections", async (string airport, int? limit, int? offset) =>
     {
         try
@@ -304,7 +300,6 @@ app.MapGet("/api/v1/airport/direct-connections", async (string airport, int? lim
             }
         }
     });
-
 
 app.MapGet("/api/v1/airport/{id}", async (string id) =>
     {
