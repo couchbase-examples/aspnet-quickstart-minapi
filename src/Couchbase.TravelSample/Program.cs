@@ -1,9 +1,9 @@
-using Couchbase;
-
+using Couchbase.Core.Exceptions.KeyValue;
 using Couchbase.Extensions.DependencyInjection;
 using Couchbase.KeyValue;
 using Couchbase.TravelSample.Models;
 using Microsoft.OpenApi.Models;
+using FluentValidation;
 
 using Route = Couchbase.TravelSample.Models.Route;
 
@@ -12,7 +12,6 @@ const string devSpecificOriginsName = "_devAllowSpecificOrigins";
 
 //global pointer to inventory scope
 IScope? inventoryScope = null;
-IBucket? bucket = null;
 
 const string airportCollection = "airport";
 const string airlineCollection = "airline";
@@ -39,6 +38,11 @@ builder.Services.AddSwaggerGen(options =>
                       + "For details on the API, please check the tutorial on the Couchbase Developer Portal: https://developer.couchbase.com/tutorial-quickstart-csharp-aspnet"
     });
 });
+
+builder.Services.AddValidatorsFromAssemblyContaining(typeof(AirportCreateRequestCommandValidator));
+builder.Services.AddValidatorsFromAssemblyContaining(typeof(AirlineCreateRequestCommandValidator));
+builder.Services.AddValidatorsFromAssemblyContaining(typeof(RouteCreateRequestCommandValidator));
+
 
 var config = builder.Configuration.GetSection("Couchbase");
 
@@ -81,28 +85,30 @@ builder.Services.AddCors(options =>
         });
 });
 
+
+
 var app = builder.Build();
 
-app.Services.GetRequiredService<IHostApplicationLifetime>().ApplicationStarted.Register(async () =>
-{
-    var configuration = builder.Configuration;
+var configuration = builder.Configuration;
 
-    // Retrieve configuration values from appsettings.json
-    var bucketName = configuration["Couchbase:BucketName"];
-    if (bucketName == null) return;
-    bucket = await app.Services.GetRequiredService<IBucketProvider>().GetBucketAsync(bucketName);
+// Retrieve configuration values from appsettings.json
+var bucketName = configuration["Couchbase:BucketName"];
+if (bucketName != null)
+{
+    var bucket = app.Services.GetRequiredService<IBucketProvider>().GetBucketAsync(bucketName).GetAwaiter().GetResult();
 
     const string scopeName = "inventory";
     
     // get inventory scope
     try
     {
-        inventoryScope = await bucket.ScopeAsync(scopeName);
+        inventoryScope = bucket.ScopeAsync(scopeName).GetAwaiter().GetResult();
     }
-    catch (Exception){
-        Console.WriteLine("Warning: The 'inventory' scope does not exist in 'travel-sample' bucket.");
+    catch (Exception)
+    {
+        throw new InvalidOperationException("The 'inventory' scope does not exist in 'travel-sample' bucket.");
     }
-});
+}
 
 // Configure the HTTP request pipeline.
 app.UseSwagger();
@@ -203,6 +209,17 @@ app.MapGet("/api/v1/airport/list", async (string? country, int? limit, int? offs
                 Description = "Number of airports to skip (for pagination). Default value: 0.",
                 Required = false
             }
+        },
+        Responses = new OpenApiResponses
+        {
+            ["200"] = new OpenApiResponse
+            {
+                Description = "List of airports"
+            },
+            ["500"] = new OpenApiResponse
+            {
+                Description = "Unexpected Error"
+            }
         }
     });
 
@@ -274,6 +291,17 @@ app.MapGet("/api/v1/airport/direct-connections", async (string airport, int? lim
                 Description = "Number of direct connections to skip (for pagination). Default value: 0.",
                 Required = false
             }
+        },
+        Responses = new OpenApiResponses
+        {
+            ["200"] = new OpenApiResponse
+            {
+                Description = "List of direct connections"
+            },
+            ["500"] = new OpenApiResponse
+            {
+                Description = "Unexpected Error"
+            }
         }
     });
 
@@ -302,7 +330,7 @@ app.MapGet("/api/v1/airport/{id}", async (string id) =>
                 return Results.Problem("Scope not found");
             }
         }
-        catch (Couchbase.Core.Exceptions.KeyValue.DocumentNotFoundException)
+        catch (DocumentNotFoundException)
         {
             Results.NotFound();
         }
@@ -326,26 +354,59 @@ app.MapGet("/api/v1/airport/{id}", async (string id) =>
                 Description = "Airport ID like airport_1273",
                 Required = true
             }
+        },
+        Responses = new OpenApiResponses
+        {
+            ["200"] = new OpenApiResponse
+            {
+                Description = "Found Airport"
+            },
+            ["404"] = new OpenApiResponse
+            {
+                Description = "Airport ID not found"
+            },
+            ["500"] = new OpenApiResponse
+            {
+                Description = "Unexpected Error"
+            }
         }
     });
 
-app.MapPost("/api/v1/airport/{id}", async (string id, AirportCreateRequestCommand request) =>
+app.MapPost("/api/v1/airport/{id}", async (string id, AirportCreateRequestCommand request, IValidator<AirportCreateRequestCommand> validator) =>
     {
-        if (inventoryScope is not null)
+        var validation = await validator.ValidateAsync(request);
+        if (!validation.IsValid)
         {
-            //get the collection
-            var collection = inventoryScope.Collection(airportCollection);
-
-            //get airport from request
-            var airport = request.GetAirport();
-
-            //save document
-            await collection.InsertAsync(id, airport);
-            return Results.Created($"/api/v1/airport/{id}", airport);
+            return Results.ValidationProblem(validation.ToDictionary());
         }
-        else
+        
+        try
         {
-            return Results.Problem("Scope not found");
+            if (inventoryScope is not null)
+            {
+                //get the collection
+                var collection = inventoryScope.Collection(airportCollection);
+
+                //get airport from request
+                var airport = request.GetAirport();
+
+                // Attempt to insert the document
+                await collection.InsertAsync(id, airport);
+                return Results.Created($"/api/v1/airport/{id}", airport);
+            }
+            else
+            {
+                return Results.Problem("Scope not found");
+            }
+        }
+        catch (DocumentExistsException)
+        {
+            // If a document with the same ID already exists, an exception will be thrown
+            return Results.Conflict($"A document with the ID '{id}' already exists.");
+        }
+        catch (Exception ex)
+        {
+            return Results.Problem(ex.Message);
         }
     })
     .WithTags("Airport")
@@ -361,32 +422,66 @@ app.MapPost("/api/v1/airport/{id}", async (string id, AirportCreateRequestComman
                 Description = "Airport ID like airport_1273",
                 Required = true
             }
+        },
+        Responses = new OpenApiResponses
+        {
+            ["201"] = new OpenApiResponse
+            {
+                Description = "Created"
+            },
+            ["409"] = new OpenApiResponse
+            {
+                Description = "Airport already exists"
+            },
+            ["500"] = new OpenApiResponse
+            {
+                Description = "Unexpected Error"
+            }
         }
     });
 
-app.MapPut("/api/v1/airport/{id}", async (string id, AirportCreateRequestCommand request) =>
+app.MapPut("/api/v1/airport/{id}", async (string id, AirportCreateRequestCommand request, IValidator<AirportCreateRequestCommand> validator) =>
     {
-        if (inventoryScope is not null)
+        var validation = await validator.ValidateAsync(request);
+        if (!validation.IsValid)
         {
-            //get the collection
-            var collection = inventoryScope.Collection(airportCollection);
-
-            //get current airport from the database and update it
-            if (await collection.GetAsync(id) is { } result)
+            return Results.ValidationProblem(validation.ToDictionary());
+        }
+        
+        try
+        {
+            if (inventoryScope is not null)
             {
-                result.ContentAs<Airport>();
-                await collection.ReplaceAsync(id, request.GetAirport());
-                return Results.Ok(request);
+                //get the collection
+                var collection = inventoryScope.Collection(airportCollection);
+
+                //get current airport from the database and update it
+                if (await collection.GetAsync(id) is { } result)
+                {
+                    result.ContentAs<Airport>();
+                    await collection.ReplaceAsync(id, request.GetAirport());
+                    return Results.Ok(request);
+                }
+                else
+                {
+                    return Results.NotFound();
+                }
             }
             else
             {
-                return Results.NotFound();
+                return Results.Problem("Scope not found");
             }
         }
-        else
+        catch (DocumentNotFoundException)
         {
-            return Results.Problem("Scope not found");
+            Results.NotFound();
         }
+        catch (Exception ex)
+        {
+            return Results.Problem(ex.Message);
+        }
+
+        return Results.NotFound();
     })
     .WithTags("Airport")
     .WithOpenApi(operation => new(operation)
@@ -401,35 +496,63 @@ app.MapPut("/api/v1/airport/{id}", async (string id, AirportCreateRequestCommand
                 Description = "Airport ID like airport_1273",
                 Required = true
             }
+        },
+        Responses = new OpenApiResponses
+        {
+            ["200"] = new OpenApiResponse
+            {
+                Description = "Airport Updated"
+            },
+            ["404"] = new OpenApiResponse
+            {
+                Description = "Airport ID not found"
+            },
+            ["500"] = new OpenApiResponse
+            {
+                Description = "Unexpected Error"
+            }
         }
     });
 
 app.MapDelete("/api/v1/airport/{id}", async(string id) => 
     {
-        if (inventoryScope is not null)
+        try
         {
-            //get the collection
-            var collection = inventoryScope.Collection(airportCollection);
-
-            //get the document from the bucket using the id
-            var result = await collection.GetAsync(id);
-
-            //validate we have a document
-            var resultAirport = result.ContentAs<Airport>();
-            if (resultAirport != null)
+            if (inventoryScope is not null)
             {
-                await collection.RemoveAsync(id);
-                return Results.Ok(id);
+                //get the collection
+                var collection = inventoryScope.Collection(airportCollection);
+
+                //get the document from the bucket using the id
+                var result = await collection.GetAsync(id);
+
+                //validate we have a document
+                var resultAirport = result.ContentAs<Airport>();
+                if (resultAirport != null)
+                {
+                    await collection.RemoveAsync(id);
+                    return Results.Ok(id);
+                }
+                else
+                {
+                    return Results.NotFound();
+                }
             }
             else
             {
-                return Results.NotFound();
+                return Results.Problem("Scope not found");
             }
         }
-        else
+        catch (DocumentNotFoundException)
         {
-            return Results.Problem("Scope not found");
+            Results.NotFound();
         }
+        catch (Exception ex)
+        {
+            return Results.Problem(ex.Message);
+        }
+
+        return Results.NotFound();
     })
     .WithTags("Airport")
     .WithOpenApi(operation => new(operation)
@@ -444,7 +567,23 @@ app.MapDelete("/api/v1/airport/{id}", async(string id) =>
                 Description = "Airport ID like airport_1273",
                 Required = true
             }
+        },
+        Responses = new OpenApiResponses
+        {
+            ["204"] = new OpenApiResponse
+            {
+                Description = "Airport Deleted"
+            },
+            ["404"] = new OpenApiResponse
+            {
+                Description = "Airport ID not found"
+            },
+            ["500"] = new OpenApiResponse
+            {
+                Description = "Unexpected Error"
+            }
         }
+        
     });
 
 app.MapGet("/api/v1/airline/list", async (string? country, int? limit, int? offset) =>
@@ -526,8 +665,18 @@ app.MapGet("/api/v1/airline/list", async (string? country, int? limit, int? offs
                 Description = "Number of airlines to skip (for pagination). Default value: 0.",
                 Required = false
             }
+        },
+        Responses = new OpenApiResponses
+        {
+            ["200"] = new OpenApiResponse
+            {
+                Description = "List of airlines"
+            },
+            ["500"] = new OpenApiResponse
+            {
+                Description = "Unexpected Error"
+            }
         }
-        
     });
 
 app.MapGet("/api/v1/airline/to-airport", async (string airport, int? limit, int? offset) =>
@@ -605,6 +754,17 @@ app.MapGet("/api/v1/airline/to-airport", async (string airport, int? limit, int?
                 Description = "Number of airlines to skip (for pagination). Default value: 0.",
                 Required = false
             }
+        },
+        Responses = new OpenApiResponses
+        {
+            ["200"] = new OpenApiResponse
+            {
+                Description = "List of airlines"
+            },
+            ["500"] = new OpenApiResponse
+            {
+                Description = "Unexpected Error"
+            }
         }
     });
 
@@ -632,7 +792,7 @@ app.MapGet("/api/v1/airline/{id}", async (string id) =>
                 return Results.Problem("Scope Not Found");
             }
         }
-        catch (Couchbase.Core.Exceptions.KeyValue.DocumentNotFoundException)
+        catch (DocumentNotFoundException)
         {
             Results.NotFound();
         }
@@ -656,26 +816,59 @@ app.MapGet("/api/v1/airline/{id}", async (string id) =>
                 Description = "Airline ID like airline_10",
                 Required = true
             }
+        },
+        Responses = new OpenApiResponses
+        {
+            ["200"] = new OpenApiResponse
+            {
+                Description = "Found Airline"
+            },
+            ["404"] = new OpenApiResponse
+            {
+                Description = "Airline ID not found"
+            },
+            ["500"] = new OpenApiResponse
+            {
+                Description = "Unexpected Error"
+            }
         }
     });
 
-app.MapPost("/api/v1/airline/{id}", async (string id, AirlineCreateRequestCommand request) =>
+app.MapPost("/api/v1/airline/{id}", async (string id, AirlineCreateRequestCommand request, IValidator<AirlineCreateRequestCommand> validator) =>
     {
-        if (inventoryScope is not null)
+        var validation = await validator.ValidateAsync(request);
+        if (!validation.IsValid)
         {
-            //get the collection
-            var collection = inventoryScope.Collection(airlineCollection);
-
-            //get airline from request
-            var airline = request.GetAirline();
-
-            //save document
-            await collection.InsertAsync(id, airline);
-            return Results.Created($"/api/v1/airline/{id}", airline);
+            return Results.ValidationProblem(validation.ToDictionary());
         }
-        else
+        
+        try
         {
-            return Results.Problem("Scope Not Found");
+            if (inventoryScope is not null)
+            {
+                //get the collection
+                var collection = inventoryScope.Collection(airlineCollection);
+
+                //get airline from request
+                var airline = request.GetAirline();
+                
+                // Attempt to insert the document
+                await collection.InsertAsync(id, airline);
+                return Results.Created($"/api/v1/airline/{id}", airline);
+            }
+            else
+            {
+                return Results.Problem("Scope Not Found");
+            }
+        }
+        catch (DocumentExistsException)
+        {
+            // If a document with the same ID already exists, an exception will be thrown
+            return Results.Conflict($"A document with the ID '{id}' already exists.");
+        }
+        catch (Exception ex)
+        {
+            return Results.Problem(ex.Message);
         }
     })
     .WithTags("Airline")
@@ -691,32 +884,67 @@ app.MapPost("/api/v1/airline/{id}", async (string id, AirlineCreateRequestComman
                 Description = "Airline ID like airline_10",
                 Required = true
             }
+        },
+        Responses = new OpenApiResponses
+        {
+            ["201"] = new OpenApiResponse
+            {
+                Description = "Created"
+            },
+            ["409"] = new OpenApiResponse
+            {
+                Description = "Airline already exists"
+            },
+            ["500"] = new OpenApiResponse
+            {
+                Description = "Unexpected Error"
+            }
         }
     });
 
-app.MapPut("/api/v1/airline/{id}", async (string id, AirlineCreateRequestCommand request) =>
+app.MapPut("/api/v1/airline/{id}", async (string id, AirlineCreateRequestCommand request, IValidator<AirlineCreateRequestCommand> validator) =>
     {
-        if (inventoryScope is not null)
+        var validation = await validator.ValidateAsync(request);
+        if (!validation.IsValid)
         {
-            //get the collection
-            var collection = inventoryScope.Collection(airlineCollection);
-
-            //get current airline from the database and update it
-            if (await collection.GetAsync(id) is { } result)
+            return Results.ValidationProblem(validation.ToDictionary());
+        }
+        
+        try
+        {
+            if (inventoryScope is not null)
             {
-                result.ContentAs<Airline>();
-                await collection.ReplaceAsync(id, request.GetAirline());
-                return Results.Ok(request);
+                //get the collection
+                var collection = inventoryScope.Collection(airlineCollection);
+
+                //get current airline from the database and update it
+                if (await collection.GetAsync(id) is { } result)
+                {
+                    result.ContentAs<Airline>();
+                    await collection.ReplaceAsync(id, request.GetAirline());
+                    return Results.Ok(request);
+                }
+                else
+                {
+                    return Results.NotFound();
+                }
             }
             else
             {
-                return Results.NotFound();
+                return Results.Problem("Scope Not Found");
             }
         }
-        else
+        catch (DocumentNotFoundException)
         {
-            return Results.Problem("Scope Not Found");
+            Results.NotFound();
         }
+        catch (Exception ex)
+        {
+            return Results.Problem(ex.Message);
+        }
+
+        return Results.NotFound();
+        
     })
     .WithTags("Airline")
     .WithOpenApi(operation => new(operation)
@@ -731,35 +959,63 @@ app.MapPut("/api/v1/airline/{id}", async (string id, AirlineCreateRequestCommand
                 Description = "Airline ID like airline_10",
                 Required = true
             }
+        },
+        Responses = new OpenApiResponses
+        {
+            ["200"] = new OpenApiResponse
+            {
+                Description = "Airline Updated"
+            },
+            ["404"] = new OpenApiResponse
+            {
+                Description = "Airline ID not found"
+            },
+            ["500"] = new OpenApiResponse
+            {
+                Description = "Unexpected Error"
+            }
         }
     });
 
 app.MapDelete("/api/v1/airline/{id}", async(string id) => 
     {
-        if (inventoryScope is not null)
+        try
         {
-            //get the collection
-            var collection = inventoryScope.Collection(airlineCollection);
-
-            //get the document from the bucket using the id
-            var result = await collection.GetAsync(id);
-
-            //validate we have a document
-            var resultAirline = result.ContentAs<Airline>();
-            if ( resultAirline != null)
+            if (inventoryScope is not null)
             {
-                await collection.RemoveAsync(id);
-                return Results.Ok(id);
+                //get the collection
+                var collection = inventoryScope.Collection(airlineCollection);
+
+                //get the document from the bucket using the id
+                var result = await collection.GetAsync(id);
+
+                //validate we have a document
+                var resultAirline = result.ContentAs<Airline>();
+                if ( resultAirline != null)
+                {
+                    await collection.RemoveAsync(id);
+                    return Results.Ok(id);
+                }
+                else
+                {
+                    return Results.NotFound();
+                }
             }
             else
             {
-                return Results.NotFound();
+                return Results.Problem("Scope Not Found");
             }
         }
-        else
+        catch (DocumentNotFoundException)
         {
-            return Results.Problem("Scope Not Found");
+            Results.NotFound();
         }
+        catch (Exception ex)
+        {
+            return Results.Problem(ex.Message);
+        }
+
+        return Results.NotFound();
     })
     .WithTags("Airline")
     .WithOpenApi(operation => new(operation)
@@ -773,6 +1029,21 @@ app.MapDelete("/api/v1/airline/{id}", async(string id) =>
                 In = ParameterLocation.Path,
                 Description = "Airline ID like airline_10",
                 Required = true
+            }
+        },
+        Responses = new OpenApiResponses
+        {
+            ["204"] = new OpenApiResponse
+            {
+                Description = "Airline Deleted"
+            },
+            ["404"] = new OpenApiResponse
+            {
+                Description = "Airline ID not found"
+            },
+            ["500"] = new OpenApiResponse
+            {
+                Description = "Unexpected Error"
             }
         }
     });
@@ -801,7 +1072,7 @@ app.MapGet("/api/v1/route/{id}", async (string id) =>
                 return Results.Problem("Scope Not Found");
             }
         }
-        catch (Couchbase.Core.Exceptions.KeyValue.DocumentNotFoundException)
+        catch (DocumentNotFoundException)
         {
             Results.NotFound();
         }
@@ -825,27 +1096,61 @@ app.MapGet("/api/v1/route/{id}", async (string id) =>
                 Description = "Route ID like route_10000",
                 Required = true
             }
+        },
+        Responses = new OpenApiResponses
+        {
+            ["200"] = new OpenApiResponse
+            {
+                Description = "Found Route"
+            },
+            ["404"] = new OpenApiResponse
+            {
+                Description = "Route ID not found"
+            },
+            ["500"] = new OpenApiResponse
+            {
+                Description = "Unexpected Error"
+            }
         }
     });
 
-app.MapPost("/api/v1/route/{id}", async (string id, RouteCreateRequestCommand request) =>
+app.MapPost("/api/v1/route/{id}", async (string id, RouteCreateRequestCommand request, IValidator<RouteCreateRequestCommand> validator) =>
     {
-        if (inventoryScope is not null)
+        var validation = await validator.ValidateAsync(request);
+        if (!validation.IsValid)
         {
-            //get the collection
-            var collection = inventoryScope.Collection(routeCollection);
-
-            //get route from request
-            var route = request.GetRoute();
-
-            //save document
-            await collection.InsertAsync(id, route);
-            return Results.Created($"/api/v1/route/{id}", route);
+            return Results.ValidationProblem(validation.ToDictionary());
         }
-        else
+        
+        try
         {
-            return Results.Problem("Scope Not Found");
+            if (inventoryScope is not null)
+            {
+                //get the collection
+                var collection = inventoryScope.Collection(routeCollection);
+
+                //get route from request
+                var route = request.GetRoute();
+                
+                // Attempt to insert the document
+                await collection.InsertAsync(id, route);
+                return Results.Created($"/api/v1/route/{id}", route);
+            }
+            else
+            {
+                return Results.Problem("Scope Not Found");
+            }
         }
+        catch (DocumentExistsException)
+        {
+            // If a document with the same ID already exists, an exception will be thrown
+            return Results.Conflict($"A document with the ID '{id}' already exists.");
+        }
+        catch (Exception ex)
+        {
+            return Results.Problem(ex.Message);
+        }
+       
     })
     .WithTags("Route")
     .WithOpenApi(operation => new(operation)
@@ -860,33 +1165,66 @@ app.MapPost("/api/v1/route/{id}", async (string id, RouteCreateRequestCommand re
                 Description = "Route ID like route_10000",
                 Required = true
             }
+        },
+        Responses = new OpenApiResponses
+        {
+            ["201"] = new OpenApiResponse
+            {
+                Description = "Created"
+            },
+            ["409"] = new OpenApiResponse
+            {
+                Description = "Route already exists"
+            },
+            ["500"] = new OpenApiResponse
+            {
+                Description = "Unexpected Error"
+            }
         }
     });
 
-app.MapPut("/api/v1/route/{id}", async (string id,RouteCreateRequestCommand request) =>
+app.MapPut("/api/v1/route/{id}", async (string id,RouteCreateRequestCommand request, IValidator<RouteCreateRequestCommand> validator) =>
     {
-        if (inventoryScope is not null)
+        var validation = await validator.ValidateAsync(request);
+        if (!validation.IsValid)
         {
-            //get the collection
-            var collection = inventoryScope.Collection(routeCollection);
-
-            //get current route from the database and update it
-            if (await collection.GetAsync(id) is { } result)
+            return Results.ValidationProblem(validation.ToDictionary());
+        }
+        
+        try
+        {
+            if (inventoryScope is not null)
             {
-                result.ContentAs<Route>();
-                await collection.ReplaceAsync(id, request.GetRoute());
-                return Results.Ok(request);
+                //get the collection
+                var collection = inventoryScope.Collection(routeCollection);
+
+                //get current route from the database and update it
+                if (await collection.GetAsync(id) is { } result)
+                {
+                    result.ContentAs<Route>();
+                    await collection.ReplaceAsync(id, request.GetRoute());
+                    return Results.Ok(request);
+                }
+                else
+                {
+                    return Results.NotFound();
+                } 
             }
             else
             {
-                return Results.NotFound();
-            } 
+                return Results.Problem("Scope Not Found");
+            }
         }
-        else
+        catch (DocumentNotFoundException)
         {
-            return Results.Problem("Scope Not Found");
+            Results.NotFound();
         }
-        
+        catch (Exception ex)
+        {
+            return Results.Problem(ex.Message);
+        }
+
+        return Results.NotFound();
     })
     .WithTags("Route")
     .WithOpenApi(operation => new(operation)
@@ -901,35 +1239,62 @@ app.MapPut("/api/v1/route/{id}", async (string id,RouteCreateRequestCommand requ
                 Description = "Route ID like route_10000",
                 Required = true
             }
+        },
+        Responses = new OpenApiResponses
+        {
+            ["200"] = new OpenApiResponse
+            {
+                Description = "Route Updated"
+            },
+            ["404"] = new OpenApiResponse
+            {
+                Description = "Route ID not found"
+            },
+            ["500"] = new OpenApiResponse
+            {
+                Description = "Unexpected Error"
+            }
         }
     });
 
 app.MapDelete("/api/v1/route/{id}", async(string id) => 
     {
-        if (inventoryScope is not null)
+        try
         {
-            var collection = inventoryScope.Collection(routeCollection);
-
-            //get the document from the bucket using the id
-            var result = await collection.GetAsync(id);
-
-            //validate we have a document
-            var resultRoute = result.ContentAs<Route>();
-            if ( resultRoute != null)
+            if (inventoryScope is not null)
             {
-                await collection.RemoveAsync(id);
-                return Results.Ok(id);
+                var collection = inventoryScope.Collection(routeCollection);
+
+                //get the document from the bucket using the id
+                var result = await collection.GetAsync(id);
+
+                //validate we have a document
+                var resultRoute = result.ContentAs<Route>();
+                if ( resultRoute != null)
+                {
+                    await collection.RemoveAsync(id);
+                    return Results.Ok(id);
+                }
+                else
+                {
+                    return Results.NotFound();
+                }
             }
             else
             {
-                return Results.NotFound();
+                return Results.Problem("Scope Not Found");
             }
         }
-        else
+        catch (DocumentNotFoundException)
         {
-            return Results.Problem("Scope Not Found");
+            Results.NotFound();
         }
-     
+        catch (Exception ex)
+        {
+            return Results.Problem(ex.Message);
+        }
+
+        return Results.NotFound();
     })
     .WithTags("Route")
     .WithOpenApi(operation => new(operation)
@@ -943,6 +1308,21 @@ app.MapDelete("/api/v1/route/{id}", async(string id) =>
                 In = ParameterLocation.Path,
                 Description = "Route ID like route_10000",
                 Required = true
+            }
+        },
+        Responses = new OpenApiResponses
+        {
+            ["204"] = new OpenApiResponse
+            {
+                Description = "Route Deleted"
+            },
+            ["404"] = new OpenApiResponse
+            {
+                Description = "Route ID not found"
+            },
+            ["500"] = new OpenApiResponse
+            {
+                Description = "Unexpected Error"
             }
         }
     });

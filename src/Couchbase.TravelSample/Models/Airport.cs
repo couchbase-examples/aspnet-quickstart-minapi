@@ -22,6 +22,6 @@ public record Airport
     [JsonPropertyName("icao")]
     public string Icao { get; set; } = string.Empty;
 
-    [JsonPropertyName("tz")]
-    public string Tz { get; set; }
+    [JsonPropertyName("tz")] 
+    public string Tz { get; set; } = string.Empty;
 }

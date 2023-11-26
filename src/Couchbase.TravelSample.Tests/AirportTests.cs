@@ -1,13 +1,9 @@
-using System.Collections.Generic;
 using System.Net;
-using System.Net.Http;
-using System.Net.Http.Json;
 using System.Text;
-using System.Threading.Tasks;
 using Couchbase.TravelSample.Models;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Newtonsoft.Json;
-using Xunit;
 
 namespace Couchbase.TravelSample.Tests;
 
@@ -29,7 +25,7 @@ public class AirportTests
         const string country = "France";
         const int pageSize = 3;
         const int iterations = 3;
-        var airportsList = new HashSet<string>();
+        var airportsList = new HashSet<string?>();
 
         for (var i = 0; i < iterations; i++)
         {
@@ -54,8 +50,20 @@ public class AirportTests
 
         Assert.Equal(pageSize * iterations, airportsList.Count);
     }
-
     
+    [Fact]
+    public async Task TestListAirportsInInvalidCountryAsync()
+    {
+        // Arrange
+        const string airportApi = $"{BaseHostname}/list?country=invalid"; 
+
+        // Act
+        var response = await _client.GetAsync(airportApi);
+
+        // Assert
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
+
     [Fact]
     public async Task GetDirectConnectionsTestAsync()
     {
@@ -78,6 +86,19 @@ public class AirportTests
         {
             Assert.Equal(limit, results.Count);
         }
+    }
+
+    [Fact]
+    public async Task TestDirectConnectionsInvalidAirportAsync()
+    {
+        // Arrange
+        const string airportApi = $"{BaseHostname}/direct-connections?airport=invalid";
+
+        // Act
+        var response = await _client.GetAsync(airportApi);
+
+        // Assert
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
 
     [Fact]
@@ -112,7 +133,19 @@ public class AirportTests
         var deleteResponse = await _client.DeleteAsync($"{BaseHostname}/{documentId}");
         Assert.Equal(HttpStatusCode.OK, deleteResponse.StatusCode);
     }
+    
+    [Fact]
+    public async Task TestReadInvalidAirportAsync()
+    {
+        // Arrange
+        const string documentId = "airport_test_invalid_id";
 
+        // Act
+        var response = await _client.GetAsync($"{BaseHostname}/{documentId}");
+
+        // Assert
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
 
     [Fact]
     public async Task CreateAirportTestAsync()
@@ -136,6 +169,56 @@ public class AirportTests
         // Remove airport
         var deleteResponse = await _client.DeleteAsync($"{BaseHostname}/{documentId}");
         Assert.Equal(HttpStatusCode.OK, deleteResponse.StatusCode);
+    }
+
+    [Fact]
+    public async Task TestAddDuplicateAirportAsync()
+    {
+        // Create the airport
+        const string documentId = "airport_test_duplicate";
+        var airport = GetAirport();
+        var newAirport = JsonConvert.SerializeObject(airport);
+        var content = new StringContent(newAirport, Encoding.UTF8, "application/json");
+        var response = await _client.PostAsync($"{BaseHostname}/{documentId}", content);
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+
+        // Try to create the same airport again
+        response = await _client.PostAsync($"{BaseHostname}/{documentId}", content);
+        Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
+
+        // Delete the airport
+        var deleteResponse = await _client.DeleteAsync($"{BaseHostname}/{documentId}");
+        Assert.Equal(HttpStatusCode.OK, deleteResponse.StatusCode);
+    }
+    
+    [Fact]
+    public async Task TestAddAirportWithoutRequiredFieldsAsync()
+    {
+        // Arrange
+        const string documentId = "airport_test_invalid_payload";
+        var airportData = new AirportCreateRequestCommand
+        {
+            City = "Test City",
+            Faa = "TAA",
+            Tz = "Europe/Berlin"
+        };
+        var content = new StringContent(JsonConvert.SerializeObject(airportData), Encoding.UTF8, "application/json");
+
+        // Act
+        var response = await _client.PostAsync($"{BaseHostname}/{documentId}", content);
+
+        // Assert
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        var responseData = JsonConvert.DeserializeObject<ValidationProblemDetails>(await response.Content.ReadAsStringAsync());
+        Assert.True(responseData != null && responseData.Errors.ContainsKey("Airportname"));
+        Assert.Equal("'Airportname' must not be empty.", responseData.Errors["Airportname"][0]);
+        Assert.True(responseData.Errors.ContainsKey("Country"));
+        Assert.Equal("'Country' must not be empty.", responseData.Errors["Country"][0]);
+        Assert.Equal("One or more validation errors occurred.", responseData.Title);
+
+        // Check if the document was not created
+        var getResponse = await _client.GetAsync($"{BaseHostname}/{documentId}");
+        Assert.Equal(HttpStatusCode.NotFound, getResponse.StatusCode);
     }
 
     [Fact]
@@ -174,6 +257,37 @@ public class AirportTests
             Assert.Equal(HttpStatusCode.OK, deleteResponse.StatusCode);
         }
     }
+    
+    [Fact]
+    public async Task TestUpdateWithInvalidDocumentAsync()
+    {
+        // Arrange
+        const string documentId = "airport_test_update_invalid_doc";
+        var updatedAirportData = new AirportCreateRequestCommand
+        {
+            City = "Updated City",
+            Country = "Updated Country",
+            Faa = "TAA",
+            Icao = "TAAS",
+            Tz = "Europe/Berlin",
+            Geo = new Geo { Lat = 40, Lon = 42, Alt = 100 }
+        };
+        var content = new StringContent(JsonConvert.SerializeObject(updatedAirportData), Encoding.UTF8, "application/json");
+
+        // Act
+        var response = await _client.PutAsync($"{BaseHostname}/{documentId}", content);
+
+        // Assert
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        var responseData = JsonConvert.DeserializeObject<ValidationProblemDetails>(await response.Content.ReadAsStringAsync());
+        Assert.True(responseData != null && responseData.Errors.ContainsKey("Airportname"));
+        Assert.Equal("'Airportname' must not be empty.", responseData.Errors["Airportname"][0]);
+        Assert.Equal("One or more validation errors occurred.", responseData.Title);
+
+        // Check if the document was not created
+        var getResponse = await _client.GetAsync($"{BaseHostname}/{documentId}");
+        Assert.Equal(HttpStatusCode.NotFound, getResponse.StatusCode);
+    }
 
     [Fact]
     public async Task DeleteAirportTestAsync()
@@ -187,7 +301,7 @@ public class AirportTests
 
         Assert.Equal(HttpStatusCode.Created, response.StatusCode);
         var jsonResults = await response.Content.ReadAsStringAsync();
-        var newAirportResult = JsonConvert.DeserializeObject<Airport>(jsonResults);
+        JsonConvert.DeserializeObject<Airport>(jsonResults);
 
         // Delete airport
         var deleteResponse = await _client.DeleteAsync($"{BaseHostname}/{documentId}");
@@ -196,6 +310,19 @@ public class AirportTests
         // Check if the airport is no longer accessible
         var getResponse = await _client.GetAsync($"{BaseHostname}/{documentId}");
         Assert.Equal(HttpStatusCode.NotFound, getResponse.StatusCode);
+    }
+    
+    [Fact]
+    public async Task TestDeleteNonExistingAirportAsync()
+    {
+        // Arrange
+        const string documentId = "airport_non_existent_document";
+
+        // Act
+        var response = await _client.DeleteAsync($"{BaseHostname}/{documentId}");
+
+        // Assert
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
 
     private static AirportCreateRequestCommand GetAirport()

@@ -20,7 +20,7 @@ public record Route
     public string Equipment { get; set; } = string.Empty;
 
     [JsonPropertyName("schedule")]
-    public List<Schedule> Schedule { get; set; }
+    public List<Schedule>? Schedule { get; set; }
 
     [JsonPropertyName("sourceairport")]
     public string SourceAirport { get; set; } = string.Empty;

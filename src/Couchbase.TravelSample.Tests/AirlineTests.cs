@@ -1,7 +1,7 @@
 using System.Net;
-using System.Net.Http.Json;
 using System.Text;
 using Couchbase.TravelSample.Models;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Newtonsoft.Json;
 
@@ -49,6 +49,19 @@ public class AirlineTests : IClassFixture<WebApplicationFactory<Program>>
 
         Assert.Equal(pageSize * iterations, airlinesList.Count);
     }
+    
+    [Fact]
+    public async Task TestListAirlinesInInvalidCountryAsync()
+    {
+        // Arrange
+        const string airlineAPi = $"{BaseHostname}/list?country=invalid"; 
+
+        // Act
+        var response = await _client.GetAsync(airlineAPi);
+
+        // Assert
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
 
     
     [Fact]
@@ -73,6 +86,19 @@ public class AirlineTests : IClassFixture<WebApplicationFactory<Program>>
         {
             Assert.Equal(limit, results.Count);
         }
+    }
+    
+    [Fact]
+    public async Task TestToAirportInvalidAirportAsync()
+    {
+        // Arrange
+        const string airlineApi = $"{BaseHostname}/to-airport?airport=invalid";
+
+        // Act
+        var response = await _client.GetAsync(airlineApi);
+
+        // Assert
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
 
     [Fact]
@@ -107,8 +133,20 @@ public class AirlineTests : IClassFixture<WebApplicationFactory<Program>>
         var deleteResponse = await _client.DeleteAsync($"{BaseHostname}/{documentId}");
         Assert.Equal(HttpStatusCode.OK, deleteResponse.StatusCode);
     }
-
     
+    [Fact]
+    public async Task TestReadInvalidAirlineAsync()
+    {
+        // Arrange
+        const string documentId = "airline_test_invalid_id";
+
+        // Act
+        var response = await _client.GetAsync($"{BaseHostname}/{documentId}");
+
+        // Assert
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
+
     [Fact]
     public async Task CreateAirlineTestAsync()
     {
@@ -131,6 +169,57 @@ public class AirlineTests : IClassFixture<WebApplicationFactory<Program>>
         var deleteResponse = await _client.DeleteAsync($"{BaseHostname}/{documentId}");
         Assert.Equal(HttpStatusCode.OK, deleteResponse.StatusCode);
     }
+    
+    [Fact]
+    public async Task TestAddDuplicateAirlineAsync()
+    {
+        // Create the airport
+        const string documentId = "airline_test_duplicate";
+        var airline = GetAirline();
+        var newAirline = JsonConvert.SerializeObject(airline);
+        var content = new StringContent(newAirline, Encoding.UTF8, "application/json");
+        var response = await _client.PostAsync($"{BaseHostname}/{documentId}", content);
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+
+        // Try to create the same airport again
+        response = await _client.PostAsync($"{BaseHostname}/{documentId}", content);
+        Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
+
+        // Delete the airport
+        var deleteResponse = await _client.DeleteAsync($"{BaseHostname}/{documentId}");
+        Assert.Equal(HttpStatusCode.OK, deleteResponse.StatusCode);
+    }
+    
+    [Fact]
+    public async Task TestAddAirlineWithoutRequiredFieldsAsync()
+    {
+        // Arrange
+        const string documentId = "airline_test_invalid_payload";
+        var airlineData = new AirlineCreateRequestCommand
+        {
+            Iata = "SAL",
+            Icao = "SALL",
+            Country = "Sample Country"
+        };
+        var content = new StringContent(JsonConvert.SerializeObject(airlineData), Encoding.UTF8, "application/json");
+
+        // Act
+        var response = await _client.PostAsync($"{BaseHostname}/{documentId}", content);
+
+        // Assert
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        var responseData = JsonConvert.DeserializeObject<ValidationProblemDetails>(await response.Content.ReadAsStringAsync());
+        Assert.True(responseData != null && responseData.Errors.ContainsKey("Name"));
+        Assert.Equal("'Name' must not be empty.", responseData.Errors["Name"][0]);
+        Assert.True(responseData.Errors.ContainsKey("Callsign"));
+        Assert.Equal("'Callsign' must not be empty.", responseData.Errors["Callsign"][0]);
+        Assert.Equal("One or more validation errors occurred.", responseData.Title);
+
+        // Check if the document was not created
+        var getResponse = await _client.GetAsync($"{BaseHostname}/{documentId}");
+        Assert.Equal(HttpStatusCode.NotFound, getResponse.StatusCode);
+    }
+
 
     [Fact]
     public async Task UpdateAirlineTestAsync()
@@ -168,6 +257,35 @@ public class AirlineTests : IClassFixture<WebApplicationFactory<Program>>
         var deleteResponse = await _client.DeleteAsync($"{BaseHostname}/{documentId}");
         Assert.Equal(HttpStatusCode.OK, deleteResponse.StatusCode);
     }
+    
+    [Fact]
+    public async Task TestUpdateWithInvalidDocumentAsync()
+    {
+        // Arrange
+        const string documentId = "airline_test_update_invalid_doc";
+        var updatedAirlineData = new AirlineCreateRequestCommand
+        {
+            Iata = "SAL",
+            Icao = "SALL",
+            Callsign = "SAM",
+            Country = "Updated Country"
+        };
+        var content = new StringContent(JsonConvert.SerializeObject(updatedAirlineData), Encoding.UTF8, "application/json");
+
+        // Act
+        var response = await _client.PutAsync($"{BaseHostname}/{documentId}", content);
+
+        // Assert
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        var responseData = JsonConvert.DeserializeObject<ValidationProblemDetails>(await response.Content.ReadAsStringAsync());
+        Assert.True(responseData != null && responseData.Errors.ContainsKey("Name"));
+        Assert.Equal("'Name' must not be empty.", responseData.Errors["Name"][0]);
+        Assert.Equal("One or more validation errors occurred.", responseData.Title);
+
+        // Check if the document was not created
+        var getResponse = await _client.GetAsync($"{BaseHostname}/{documentId}");
+        Assert.Equal(HttpStatusCode.NotFound, getResponse.StatusCode);
+    }
 
     [Fact]
     public async Task DeleteAirlineTestAsync()
@@ -181,7 +299,7 @@ public class AirlineTests : IClassFixture<WebApplicationFactory<Program>>
 
         Assert.Equal(HttpStatusCode.Created, response.StatusCode);
         var jsonResults = await response.Content.ReadAsStringAsync();
-        var newAirlineResult = JsonConvert.DeserializeObject<Airline>(jsonResults);
+        JsonConvert.DeserializeObject<Airline>(jsonResults);
 
         // Delete airline
         var deleteResponse = await _client.DeleteAsync($"{BaseHostname}/{documentId}");
@@ -190,6 +308,19 @@ public class AirlineTests : IClassFixture<WebApplicationFactory<Program>>
         // Check if the airline is no longer accessible
         var getResponse = await _client.GetAsync($"{BaseHostname}/{documentId}");
         Assert.Equal(HttpStatusCode.NotFound, getResponse.StatusCode);
+    }
+    
+    [Fact]
+    public async Task TestDeleteNonExistingAirlineAsync()
+    {
+        // Arrange
+        const string documentId = "airline_non_existent_document";
+
+        // Act
+        var response = await _client.DeleteAsync($"{BaseHostname}/{documentId}");
+
+        // Assert
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
 
     private static AirlineCreateRequestCommand GetAirline()
