@@ -25,7 +25,7 @@ public class AirportTests
         const string country = "France";
         const int pageSize = 3;
         const int iterations = 3;
-        var airportsList = new HashSet<string?>();
+        var airportsList = new List<string?>();
 
         for (var i = 0; i < iterations; i++)
         {
@@ -50,6 +50,7 @@ public class AirportTests
 
         Assert.Equal(pageSize * iterations, airportsList.Count);
     }
+
     
     [Fact]
     public async Task TestListAirportsInInvalidCountryAsync()

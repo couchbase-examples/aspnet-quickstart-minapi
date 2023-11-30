@@ -24,7 +24,7 @@ public class AirlineTests : IClassFixture<WebApplicationFactory<Program>>
         const string country = "United States";
         const int pageSize = 3;
         const int iterations = 3;
-        var airlinesList = new HashSet<string>();
+        var airlinesList = new List<string>();
 
         for (var i = 0; i < iterations; i++)
         {

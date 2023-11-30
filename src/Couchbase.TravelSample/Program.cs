@@ -1,3 +1,4 @@
+using System.Text;
 using Couchbase.Core.Exceptions.KeyValue;
 using Couchbase.Extensions.DependencyInjection;
 using Couchbase.KeyValue;
@@ -22,26 +23,29 @@ const string routeCollection = "route";
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
 {
+    var description = new StringBuilder()
+        .AppendLine("A quickstart API using C# and ASP.NET with Couchbase and travel-sample data.\n\n")
+        .AppendLine("We have a visual representation of the API documentation using Swagger which allows you to interact with the API's endpoints directly through the browser. It provides a clear view of the API including endpoints, HTTP methods, request parameters, and response objects.\n\n")
+        .AppendLine("Click on an individual endpoint to expand it and see detailed information. This includes the endpoint's description, possible response status codes, and the request parameters it accepts.\n\n")
+        .AppendLine("Trying Out the API\n\n")
+        .AppendLine("You can try out an API by clicking on the \"Try it out\" button next to the endpoints.\n\n")
+        .AppendLine("- Parameters: If an endpoint requires parameters, Swagger UI provides input boxes for you to fill in. This could include path parameters, query strings, headers, or the body of a POST/PUT request.\n\n")
+        .AppendLine("- Execution: Once you've inputted all the necessary parameters, you can click the \"Execute\" button to make a live API call. Swagger UI will send the request to the API and display the response directly in the documentation. This includes the response code, response headers, and response body.\n\n")
+        .AppendLine("Models\n\n")
+        .AppendLine("Swagger documents the structure of request and response bodies using models. These models define the expected data structure using JSON schema and are extremely helpful in understanding what data to send and expect.\n\n")
+        .AppendLine("For details on the API, please check the tutorial on the Couchbase Developer Portal: https://developer.couchbase.com/tutorial-quickstart-csharp-aspnet\n\n")
+        .ToString();
+
     options.SwaggerDoc("v1", new OpenApiInfo
     {
         Version = "1.0",
         Title = "Quickstart in Couchbase with C# and ASP.NET Minimal API",
-        Description = "A quickstart API using C# and ASP.NET with Couchbase and travel-sample data. \n\n"
-                      + "We have a visual representation of the API documentation using Swagger which allows you to interact with the API's endpoints directly through the browser. It provides a clear view of the API including endpoints, HTTP methods, request parameters, and response objects.\n\n"
-                      + "Click on an individual endpoint to expand it and see detailed information. This includes the endpoint's description, possible response status codes, and the request parameters it accepts.\n\n"
-                      + "Trying Out the API\n\n"
-                      + "You can try out an API by clicking on the \"Try it out\" button next to the endpoints.\n\n"
-                      + "- Parameters: If an endpoint requires parameters, Swagger UI provides input boxes for you to fill in. This could include path parameters, query strings, headers, or the body of a POST/PUT request.\n\n"
-                      + "- Execution: Once you've inputted all the necessary parameters, you can click the \"Execute\" button to make a live API call. Swagger UI will send the request to the API and display the response directly in the documentation. This includes the response code, response headers, and response body.\n\n"
-                      + "Models\n\n"
-                      + "Swagger documents the structure of request and response bodies using models. These models define the expected data structure using JSON schema and are extremely helpful in understanding what data to send and expect.\n\n"
-                      + "For details on the API, please check the tutorial on the Couchbase Developer Portal: https://developer.couchbase.com/tutorial-quickstart-csharp-aspnet"
+        Description = description
     });
 });
 
+
 builder.Services.AddValidatorsFromAssemblyContaining(typeof(AirportCreateRequestCommandValidator));
-builder.Services.AddValidatorsFromAssemblyContaining(typeof(AirlineCreateRequestCommandValidator));
-builder.Services.AddValidatorsFromAssemblyContaining(typeof(RouteCreateRequestCommandValidator));
 
 var config = builder.Configuration.GetSection("Couchbase");
 
@@ -130,39 +134,44 @@ app.MapGet("/api/v1/airport/list", async (string? country, int? limit, int? offs
         try
         {
             if (inventoryScope is not null){
+                
+                // setup parameters
+                var queryParameters = new Couchbase.Query.QueryOptions();
+                queryParameters.Parameter("limit", limit ?? 10);
+                queryParameters.Parameter("offset", offset ?? 0);
 
-                // Set default values for limit and offset if not provided by the user
-                limit ??= 10; 
-                offset ??= 0;
-
-                var query = string.IsNullOrEmpty(country) ? $@"SELECT airport.airportname,
-                              airport.city,
-                              airport.country,
-                              airport.faa,
-                              airport.geo,
-                              airport.icao,
-                              airport.tz
-                 FROM airport AS airport
-                 ORDER BY airport.airportname
-                 LIMIT $limit
-                 OFFSET $offset" : $@"SELECT airport.airportname,
+                string query;
+                if (!string.IsNullOrEmpty(country))
+                {
+                    query = $@"SELECT airport.airportname,
                           airport.city,
                           airport.country,
                           airport.faa,
                           airport.geo,
                           airport.icao,
                           airport.tz
-             FROM airport AS airport
-             WHERE lower(airport.country) = $country
-             ORDER BY airport.airportname
-             LIMIT $limit
-             OFFSET $offset";
-
-                //setup parameters
-                var queryParameters = new Couchbase.Query.QueryOptions();
-                queryParameters.Parameter("country", string.IsNullOrEmpty(country) ? "" : country.ToLower());
-                queryParameters.Parameter("limit", limit);
-                queryParameters.Parameter("offset", offset);
+                        FROM airport AS airport
+                        WHERE lower(airport.country) = $country
+                        ORDER BY airport.airportname
+                        LIMIT $limit
+                        OFFSET $offset";
+                    
+                        queryParameters.Parameter("country", country.ToLower());
+                }
+                else
+                {
+                    query = $@"SELECT airport.airportname,
+                              airport.city,
+                              airport.country,
+                              airport.faa,
+                              airport.geo,
+                              airport.icao,
+                              airport.tz
+                            FROM airport AS airport
+                            ORDER BY airport.airportname
+                            LIMIT $limit
+                            OFFSET $offset";
+                }
 
                 var results = await inventoryScope.QueryAsync<Airport>(query, queryParameters);
                 var items = await results.Rows.ToListAsync();
@@ -226,10 +235,12 @@ app.MapGet("/api/v1/airport/direct-connections", async (string airport, int? lim
         {
             if (inventoryScope is not null)
             {
-                // Set default values for limit and offset if not provided by the user
-                limit ??= 10;
-                offset ??= 0;
-
+                //setup parameters
+                var queryParameters = new Couchbase.Query.QueryOptions();
+                queryParameters.Parameter("airport", airport.ToLower());
+                queryParameters.Parameter("limit", limit ?? 10);
+                queryParameters.Parameter("offset", offset ?? 0);
+                
                 const string query = $@"SELECT DISTINCT route.destinationairport
                  FROM airport AS airport
                  JOIN route AS route
@@ -238,12 +249,6 @@ app.MapGet("/api/v1/airport/direct-connections", async (string airport, int? lim
                  ORDER BY route.destinationairport
                  LIMIT $limit
                  OFFSET $offset";
-
-                //setup parameters
-                var queryParameters = new Couchbase.Query.QueryOptions();
-                queryParameters.Parameter("airport", airport.ToLower());
-                queryParameters.Parameter("limit", limit);
-                queryParameters.Parameter("offset", offset);
 
                 var results = await inventoryScope.QueryAsync<DestinationAirport>(query, queryParameters);
                 var items = await results.Rows.ToListAsync();
@@ -582,26 +587,20 @@ app.MapDelete("/api/v1/airport/{id}", async(string id) =>
     });
 
 app.MapGet("/api/v1/airline/list", async (string? country, int? limit, int? offset) =>
+{
+    try
     {
-        try
+        if (inventoryScope is not null)
         {
-            if (inventoryScope is not null)
-            {
-                // Set default values for limit and offset if not provided by the user
-                limit ??= 10;
-                offset ??= 0;
+            // setup parameters
+            var queryParameters = new Couchbase.Query.QueryOptions();
+            queryParameters.Parameter("limit", limit ?? 10);
+            queryParameters.Parameter("offset", offset ?? 0);
 
-                var query = string.IsNullOrEmpty(country)
-                    ? $@"SELECT airline.callsign,
-                            airline.country,
-                            airline.iata,
-                            airline.icao,
-                            airline.name
-                            FROM airline AS airline
-                            ORDER BY airline.name
-                            LIMIT $limit
-                            OFFSET $offset"
-                    : $@"SELECT airline.callsign,
+            string query;
+            if (!string.IsNullOrEmpty(country))
+            {
+                query = $@"SELECT airline.callsign,
                             airline.country,
                             airline.iata,
                             airline.icao,
@@ -611,29 +610,37 @@ app.MapGet("/api/v1/airline/list", async (string? country, int? limit, int? offs
                             ORDER BY airline.name
                             LIMIT $limit
                             OFFSET $offset";
-
-                //setup parameters
-                var queryParameters = new Couchbase.Query.QueryOptions();
-                queryParameters.Parameter("country", string.IsNullOrEmpty(country) ? "" : country.ToLower());
-                queryParameters.Parameter("limit", limit);
-                queryParameters.Parameter("offset", offset);
-
-                var results = await inventoryScope.QueryAsync<Airline>(query, queryParameters);
-                var items = await results.Rows.ToListAsync();
-
-                return items.Count == 0 ? Results.NotFound() : Results.Ok(items);
+                queryParameters.Parameter("country", country.ToLower());
             }
             else
             {
-                return Results.Problem("Scope not found");
+                query = $@"SELECT airline.callsign,
+                            airline.country,
+                            airline.iata,
+                            airline.icao,
+                            airline.name
+                            FROM airline AS airline
+                            ORDER BY airline.name
+                            LIMIT $limit
+                            OFFSET $offset";
             }
+
+            var results = await inventoryScope.QueryAsync<Airline>(query, queryParameters);
+            var items = await results.Rows.ToListAsync();
+
+            return items.Count == 0 ? Results.NotFound() : Results.Ok(items);
         }
-        catch (Exception ex)
+        else
         {
-            return Results.Problem(ex.Message);
+            return Results.Problem("Scope not found");
         }
-    })
-    .WithTags("Airline")
+    }
+    catch (Exception ex)
+    {
+        return Results.Problem(ex.Message);
+    }
+})
+.WithTags("Airline")
     .WithOpenApi(operation => new(operation)
     {
         Description = "Get list of Airlines. Optionally, you can filter the list by Country.\n\nThis provides an example of using SQL++ query in Couchbase to fetch a list of documents matching the specified criteria.",
@@ -680,11 +687,13 @@ app.MapGet("/api/v1/airline/to-airport", async (string airport, int? limit, int?
         {
             if (inventoryScope is not null)
             {
-                // Set default values for limit and offset if not provided by the user
-                limit ??= 10;
-                offset ??= 0;
-
-                var query = $@"SELECT air.callsign,
+                //setup parameters
+                var queryParameters = new Couchbase.Query.QueryOptions();
+                queryParameters.Parameter("airport", airport.ToLower());
+                queryParameters.Parameter("limit", limit ?? 10);
+                queryParameters.Parameter("offset", offset ?? 0);
+                
+                const string query = $@"SELECT air.callsign,
                                    air.country,
                                    air.iata,
                                    air.icao,
@@ -700,12 +709,6 @@ app.MapGet("/api/v1/airline/to-airport", async (string airport, int? limit, int?
                           ON META(air).id = SUBQUERY.airlineId
                           LIMIT $limit
                           OFFSET $offset";
-
-                //setup parameters
-                var queryParameters = new Couchbase.Query.QueryOptions();
-                queryParameters.Parameter("airport", airport.ToLower());
-                queryParameters.Parameter("limit", limit);
-                queryParameters.Parameter("offset", offset);
 
                 var results = await inventoryScope.QueryAsync<Airline>(query, queryParameters);
                 var items = await results.Rows.ToListAsync();
