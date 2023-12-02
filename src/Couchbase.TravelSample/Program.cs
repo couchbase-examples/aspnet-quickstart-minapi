@@ -313,7 +313,7 @@ app.MapGet("/api/v1/airport/{id}", async (string id) =>
             if (inventoryScope is not null)
             {
                 //get the collection
-                var collection = inventoryScope.Collection(airportCollection);
+                var collection = await inventoryScope.CollectionAsync(airportCollection);
 
                 //get the document from the bucket using the id
                 var result = await collection.GetAsync(id);
@@ -385,7 +385,7 @@ app.MapPost("/api/v1/airport/{id}", async (string id, AirportCreateRequestComman
             if (inventoryScope is not null)
             {
                 //get the collection
-                var collection = inventoryScope.Collection(airportCollection);
+                var collection = await inventoryScope.CollectionAsync(airportCollection);
 
                 //get airport from request
                 var airport = request.GetAirport();
@@ -453,7 +453,7 @@ app.MapPut("/api/v1/airport/{id}", async (string id, AirportCreateRequestCommand
             if (inventoryScope is not null)
             {
                 //get the collection
-                var collection = inventoryScope.Collection(airportCollection);
+                var collection = await inventoryScope.CollectionAsync(airportCollection);
 
                 //get current airport from the database and update it
                 if (await collection.GetAsync(id) is { } result)
@@ -521,7 +521,7 @@ app.MapDelete("/api/v1/airport/{id}", async(string id) =>
             if (inventoryScope is not null)
             {
                 //get the collection
-                var collection = inventoryScope.Collection(airportCollection);
+                var collection = await inventoryScope.CollectionAsync(airportCollection);
 
                 //get the document from the bucket using the id
                 var result = await collection.GetAsync(id);
@@ -773,16 +773,16 @@ app.MapGet("/api/v1/airline/{id}", async (string id) =>
             if (inventoryScope is not null)
             {
                 //get the collection
-                var collection = inventoryScope.Collection(airlineCollection);
+                var collection = await inventoryScope.CollectionAsync(airlineCollection);
 
                 //get the document from the bucket using the id
                 var result = await collection.GetAsync(id);
 
                 //validate we have a document
-                var resultAirlines = result.ContentAs<Airline>();
-                if (resultAirlines != null)
+                var resultAirline = result.ContentAs<Airline>();
+                if (resultAirline != null)
                 {
-                    return Results.Ok(resultAirlines);
+                    return Results.Ok(resultAirline);
                 }
             }
             else
@@ -845,7 +845,7 @@ app.MapPost("/api/v1/airline/{id}", async (string id, AirlineCreateRequestComman
             if (inventoryScope is not null)
             {
                 //get the collection
-                var collection = inventoryScope.Collection(airlineCollection);
+                var collection = await inventoryScope.CollectionAsync(airlineCollection);
 
                 //get airline from request
                 var airline = request.GetAirline();
@@ -913,7 +913,7 @@ app.MapPut("/api/v1/airline/{id}", async (string id, AirlineCreateRequestCommand
             if (inventoryScope is not null)
             {
                 //get the collection
-                var collection = inventoryScope.Collection(airlineCollection);
+                var collection = await inventoryScope.CollectionAsync(airlineCollection);
 
                 //get current airline from the database and update it
                 if (await collection.GetAsync(id) is { } result)
@@ -982,7 +982,7 @@ app.MapDelete("/api/v1/airline/{id}", async(string id) =>
             if (inventoryScope is not null)
             {
                 //get the collection
-                var collection = inventoryScope.Collection(airlineCollection);
+                var collection = await inventoryScope.CollectionAsync(airlineCollection);
 
                 //get the document from the bucket using the id
                 var result = await collection.GetAsync(id);
@@ -1053,16 +1053,16 @@ app.MapGet("/api/v1/route/{id}", async (string id) =>
             if (inventoryScope is not null)
             {
                 //get the collection
-                var collection = inventoryScope.Collection(routeCollection);
+                var collection = await inventoryScope.CollectionAsync(routeCollection);
 
                 //get the document from the bucket using the id
                 var result = await collection.GetAsync(id);
 
                 //validate we have a document
-                var resultAirlines = result.ContentAs<Route>();
-                if (resultAirlines != null)
+                var resultRoute = result.ContentAs<Route>();
+                if (resultRoute != null)
                 {
-                    return Results.Ok(resultAirlines);
+                    return Results.Ok(resultRoute);
                 }
             }
             else
@@ -1125,7 +1125,7 @@ app.MapPost("/api/v1/route/{id}", async (string id, RouteCreateRequestCommand re
             if (inventoryScope is not null)
             {
                 //get the collection
-                var collection = inventoryScope.Collection(routeCollection);
+                var collection = await inventoryScope.CollectionAsync(routeCollection);
 
                 //get route from request
                 var route = request.GetRoute();
@@ -1181,7 +1181,7 @@ app.MapPost("/api/v1/route/{id}", async (string id, RouteCreateRequestCommand re
         }
     });
 
-app.MapPut("/api/v1/route/{id}", async (string id,RouteCreateRequestCommand request, IValidator<RouteCreateRequestCommand> validator) =>
+app.MapPut("/api/v1/route/{id}", async (string id, RouteCreateRequestCommand request, IValidator<RouteCreateRequestCommand> validator) =>
     {
         var validation = await validator.ValidateAsync(request);
         if (!validation.IsValid)
@@ -1194,7 +1194,7 @@ app.MapPut("/api/v1/route/{id}", async (string id,RouteCreateRequestCommand requ
             if (inventoryScope is not null)
             {
                 //get the collection
-                var collection = inventoryScope.Collection(routeCollection);
+                var collection = await inventoryScope.CollectionAsync(routeCollection);
 
                 //get current route from the database and update it
                 if (await collection.GetAsync(id) is { } result)
@@ -1261,7 +1261,7 @@ app.MapDelete("/api/v1/route/{id}", async(string id) =>
         {
             if (inventoryScope is not null)
             {
-                var collection = inventoryScope.Collection(routeCollection);
+                var collection = await inventoryScope.CollectionAsync(routeCollection);
 
                 //get the document from the bucket using the id
                 var result = await collection.GetAsync(id);
