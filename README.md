@@ -14,7 +14,7 @@ To run this prebuilt project, you will need:
 
 - [Couchbase Capella](https://www.couchbase.com/products/capella/) cluster with [travel-sample](https://docs.couchbase.com/dotnet-sdk/current/ref/travel-app-data-model.html) bucket loaded.
   - To run this tutorial using a self managed Couchbase cluster, please refer to the [appendix](#running-self-managed-couchbase-cluster).
-- [.NET SDK v8+](https://dotnet.microsoft.com/download/dotnet/8.0) installed.
+- [.NET SDK v6+](https://dotnet.microsoft.com/en-us/download/dotnet) installed.
   - Ensure that the .Net version is [compatible](https://docs.couchbase.com/dotnet-sdk/current/project-docs/compatibility.html#dotnet-version-compat) with the Couchbase SDK. 
 - Code Editor installed (Visual Studio Professional, Visual Studio Code, or JetBrains Rider)
 - Loading Travel Sample Bucket
