@@ -191,7 +191,7 @@ app.MapGet("/api/v1/airport/list", async (string? country, int? limit, int? offs
     .WithTags("Airport")
     .WithOpenApi(operation => new(operation)
     {
-        Description = "Get list of Airports. Optionally, you can filter the list by Country.\n\nThis provides an example of using a SQL++ query in Couchbase to fetch a list of documents matching the specified criteria.",
+        Description = "Get list of Airports. Optionally, you can filter the list by Country.\n\nThis provides an example of using a SQL++ query in Couchbase to fetch a list of documents matching the specified criteria.\n\n Class: [`Program.cs`](https://github.com/couchbase-examples/aspnet-minapi-quickstart-travelsample/blob/main/src/Couchbase.TravelSample/Program.cs)",
         Parameters = new List<OpenApiParameter>
         {
             new OpenApiParameter
@@ -268,7 +268,7 @@ app.MapGet("/api/v1/airport/direct-connections", async (string airport, int? lim
     .WithTags("Airport")
     .WithOpenApi(operation => new(operation)
     {
-        Description = "Get Direct Connections from specified Airport.\n\nThis provides an example of using a SQL++ query in Couchbase to fetch a list of documents matching the specified criteria.",
+        Description = "Get Direct Connections from specified Airport.\n\nThis provides an example of using a SQL++ query in Couchbase to fetch a list of documents matching the specified criteria.\n\n Class: [`Program.cs`](https://github.com/couchbase-examples/aspnet-minapi-quickstart-travelsample/blob/main/src/Couchbase.TravelSample/Program.cs)",
         Parameters = new List<OpenApiParameter>
         {
             new OpenApiParameter
@@ -344,7 +344,7 @@ app.MapGet("/api/v1/airport/{id}", async (string id) =>
     .WithTags("Airport")
     .WithOpenApi(operation => new(operation)
     {
-        Description = "Get Airport with specified ID.\n\nThis provides an example of using Key Value operations in Couchbase to get a document with specified ID.",
+        Description = "Get Airport with specified ID.\n\nThis provides an example of using Key Value operations in Couchbase to get a document with specified ID.\n\n Class: [`Program.cs`](https://github.com/couchbase-examples/aspnet-minapi-quickstart-travelsample/blob/main/src/Couchbase.TravelSample/Program.cs)",
         Parameters = new List<OpenApiParameter>
         {
             new OpenApiParameter
@@ -412,7 +412,7 @@ app.MapPost("/api/v1/airport/{id}", async (string id, AirportCreateRequestComman
     .WithTags("Airport")
     .WithOpenApi(operation => new(operation)
     {
-        Description = "Create Airport with specified ID.\n\nThis provides an example of using Key Value operations in Couchbase to create a new document with a specified ID.",
+        Description = "Create Airport with specified ID.\n\nThis provides an example of using Key Value operations in Couchbase to create a new document with a specified ID.\n\n Class: [`Program.cs`](https://github.com/couchbase-examples/aspnet-minapi-quickstart-travelsample/blob/main/src/Couchbase.TravelSample/Program.cs)",
         Parameters = new List<OpenApiParameter>
         {
             new OpenApiParameter
@@ -486,7 +486,7 @@ app.MapPut("/api/v1/airport/{id}", async (string id, AirportCreateRequestCommand
     .WithTags("Airport")
     .WithOpenApi(operation => new(operation)
     {
-        Description = "Update Airport with specified ID.\n\nThis provides an example of using Key Value operations in Couchbase to upsert a document with specified ID.",
+        Description = "Update Airport with specified ID.\n\nThis provides an example of using Key Value operations in Couchbase to upsert a document with specified ID.\n\n Class: [`Program.cs`](https://github.com/couchbase-examples/aspnet-minapi-quickstart-travelsample/blob/main/src/Couchbase.TravelSample/Program.cs)",
         Parameters = new List<OpenApiParameter>
         {
             new OpenApiParameter
@@ -557,7 +557,7 @@ app.MapDelete("/api/v1/airport/{id}", async(string id) =>
     .WithTags("Airport")
     .WithOpenApi(operation => new(operation)
     {
-        Description = "Delete Airport with specified ID.\n\nThis provides an example of using Key Value operations in Couchbase to delete a document with specified ID.",
+        Description = "Delete Airport with specified ID.\n\nThis provides an example of using Key Value operations in Couchbase to delete a document with specified ID.\n\n Class: [`Program.cs`](https://github.com/couchbase-examples/aspnet-minapi-quickstart-travelsample/blob/main/src/Couchbase.TravelSample/Program.cs)",
         Parameters = new List<OpenApiParameter>
         {
             new OpenApiParameter
@@ -643,7 +643,7 @@ app.MapGet("/api/v1/airline/list", async (string? country, int? limit, int? offs
 .WithTags("Airline")
     .WithOpenApi(operation => new(operation)
     {
-        Description = "Get list of Airlines. Optionally, you can filter the list by Country.\n\nThis provides an example of using SQL++ query in Couchbase to fetch a list of documents matching the specified criteria.",
+        Description = "Get list of Airlines. Optionally, you can filter the list by Country.\n\nThis provides an example of using SQL++ query in Couchbase to fetch a list of documents matching the specified criteria.\n\n Class: [`Program.cs`](https://github.com/couchbase-examples/aspnet-minapi-quickstart-travelsample/blob/main/src/Couchbase.TravelSample/Program.cs)",
         Parameters = new List<OpenApiParameter>
         {
             new OpenApiParameter
@@ -728,7 +728,7 @@ app.MapGet("/api/v1/airline/to-airport", async (string airport, int? limit, int?
     .WithTags("Airline")
     .WithOpenApi(operation => new(operation)
     {
-        Description = "Get Airlines flying to specified destination Airport.\n\nThis provides an example of using SQL++ query in Couchbase to fetch a list of documents matching the specified criteria.",
+        Description = "Get Airlines flying to specified destination Airport.\n\nThis provides an example of using SQL++ query in Couchbase to fetch a list of documents matching the specified criteria.\n\n Class: [`Program.cs`](https://github.com/couchbase-examples/aspnet-minapi-quickstart-travelsample/blob/main/src/Couchbase.TravelSample/Program.cs)",
         Parameters = new List<OpenApiParameter>
         {
             new OpenApiParameter
@@ -804,7 +804,7 @@ app.MapGet("/api/v1/airline/{id}", async (string id) =>
     .WithTags("Airline")
     .WithOpenApi(operation => new(operation)
     {
-        Description = "Get Airline with specified ID.\n\nThis provides an example of using Key Value operations in Couchbase to get a document with specified ID.",
+        Description = "Get Airline with specified ID.\n\nThis provides an example of using Key Value operations in Couchbase to get a document with specified ID.\n\n Class: [`Program.cs`](https://github.com/couchbase-examples/aspnet-minapi-quickstart-travelsample/blob/main/src/Couchbase.TravelSample/Program.cs)",
         Parameters = new List<OpenApiParameter>
         {
             new OpenApiParameter
@@ -872,7 +872,7 @@ app.MapPost("/api/v1/airline/{id}", async (string id, AirlineCreateRequestComman
     .WithTags("Airline")
     .WithOpenApi(operation => new(operation)
     {
-        Description = "Create Airline with specified ID.\n\nThis provides an example of using Key Value operations in Couchbase to create a new document with a specified ID.",
+        Description = "Create Airline with specified ID.\n\nThis provides an example of using Key Value operations in Couchbase to create a new document with a specified ID.\n\n Class: [`Program.cs`](https://github.com/couchbase-examples/aspnet-minapi-quickstart-travelsample/blob/main/src/Couchbase.TravelSample/Program.cs)",
         Parameters = new List<OpenApiParameter>
         {
             new OpenApiParameter
@@ -947,7 +947,7 @@ app.MapPut("/api/v1/airline/{id}", async (string id, AirlineCreateRequestCommand
     .WithTags("Airline")
     .WithOpenApi(operation => new(operation)
     {
-        Description = "Update Airline with specified ID.\n\nThis provides an example of using Key Value operations in Couchbase to upsert a document with specified ID.",
+        Description = "Update Airline with specified ID.\n\nThis provides an example of using Key Value operations in Couchbase to upsert a document with specified ID.\n\n Class: [`Program.cs`](https://github.com/couchbase-examples/aspnet-minapi-quickstart-travelsample/blob/main/src/Couchbase.TravelSample/Program.cs)",
         Parameters = new List<OpenApiParameter>
         {
             new OpenApiParameter
@@ -1018,7 +1018,7 @@ app.MapDelete("/api/v1/airline/{id}", async(string id) =>
     .WithTags("Airline")
     .WithOpenApi(operation => new(operation)
     {
-        Description = "Delete Airline with specified ID.\n\nThis provides an example of using Key Value operations in Couchbase to delete a document with specified ID.",
+        Description = "Delete Airline with specified ID.\n\nThis provides an example of using Key Value operations in Couchbase to delete a document with specified ID.\n\n Class: [`Program.cs`](https://github.com/couchbase-examples/aspnet-minapi-quickstart-travelsample/blob/main/src/Couchbase.TravelSample/Program.cs)",
         Parameters = new List<OpenApiParameter>
         {
             new OpenApiParameter
@@ -1084,7 +1084,7 @@ app.MapGet("/api/v1/route/{id}", async (string id) =>
     .WithTags("Route")
     .WithOpenApi(operation => new(operation)
     {
-        Description = "Get Route with specified ID.\n\nThis provides an example of using Key Value operations in Couchbase to get a document with specified ID.",
+        Description = "Get Route with specified ID.\n\nThis provides an example of using Key Value operations in Couchbase to get a document with specified ID.\n\n Class: [`Program.cs`](https://github.com/couchbase-examples/aspnet-minapi-quickstart-travelsample/blob/main/src/Couchbase.TravelSample/Program.cs)",
         Parameters = new List<OpenApiParameter>
         {
             new OpenApiParameter
@@ -1153,7 +1153,7 @@ app.MapPost("/api/v1/route/{id}", async (string id, RouteCreateRequestCommand re
     .WithTags("Route")
     .WithOpenApi(operation => new(operation)
     {
-        Description = "Create Route with specified ID.\n\nThis provides an example of using Key Value operations in Couchbase to create a new document with a specified ID.",
+        Description = "Create Route with specified ID.\n\nThis provides an example of using Key Value operations in Couchbase to create a new document with a specified ID.\n\n Class: [`Program.cs`](https://github.com/couchbase-examples/aspnet-minapi-quickstart-travelsample/blob/main/src/Couchbase.TravelSample/Program.cs)",
         Parameters = new List<OpenApiParameter>
         {
             new OpenApiParameter
@@ -1227,7 +1227,7 @@ app.MapPut("/api/v1/route/{id}", async (string id, RouteCreateRequestCommand req
     .WithTags("Route")
     .WithOpenApi(operation => new(operation)
     {
-        Description = "Update Route with specified ID.\n\nThis provides an example of using Key Value operations in Couchbase to upsert a document with specified ID.",
+        Description = "Update Route with specified ID.\n\nThis provides an example of using Key Value operations in Couchbase to upsert a document with specified ID.\n\n Class: [`Program.cs`](https://github.com/couchbase-examples/aspnet-minapi-quickstart-travelsample/blob/main/src/Couchbase.TravelSample/Program.cs)",
         Parameters = new List<OpenApiParameter>
         {
             new OpenApiParameter
@@ -1297,7 +1297,7 @@ app.MapDelete("/api/v1/route/{id}", async(string id) =>
     .WithTags("Route")
     .WithOpenApi(operation => new(operation)
     {
-        Description = "Delete Route with specified ID.\n\nThis provides an example of using Key Value operations in Couchbase to delete a document with specified ID.",
+        Description = "Delete Route with specified ID.\n\nThis provides an example of using Key Value operations in Couchbase to delete a document with specified ID.\n\n Class: [`Program.cs`](https://github.com/couchbase-examples/aspnet-minapi-quickstart-travelsample/blob/main/src/Couchbase.TravelSample/Program.cs)",
         Parameters = new List<OpenApiParameter>
         {
             new OpenApiParameter
