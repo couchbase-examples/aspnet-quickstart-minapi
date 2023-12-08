@@ -63,7 +63,6 @@ public class AirlineTests : IClassFixture<WebApplicationFactory<Program>>
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
 
-    
     [Fact]
     public async Task GetToAirportTestAsync()
     {
