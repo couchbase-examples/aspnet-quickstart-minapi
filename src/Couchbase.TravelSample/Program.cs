@@ -5,7 +5,8 @@ using Couchbase.KeyValue;
 using Couchbase.TravelSample.Models;
 using Microsoft.OpenApi.Models;
 using FluentValidation;
-
+using Microsoft.AspNetCore.Hosting.Server;
+using Microsoft.AspNetCore.Hosting.Server.Features;
 using Route = Couchbase.TravelSample.Models.Route;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -90,12 +91,26 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
-var configuration = builder.Configuration;
+// Get the application lifetime object
+var lifetime = app.Services.GetRequiredService<IHostApplicationLifetime>();
 
-// Retrieve configuration values from appsettings.json
-var bucketName = configuration["Couchbase:BucketName"];
-if (bucketName != null)
+lifetime.ApplicationStarted.Register(() =>
 {
+    
+    // Get the logger
+    var logger = app.Services.GetRequiredService<ILogger<Program>>();
+
+    // Get the address
+    var address = app.Services.GetRequiredService<IServer>().Features.Get<IServerAddressesFeature>()?.Addresses.FirstOrDefault();
+
+    // Log the Swagger URL
+    logger.LogInformation("Swagger UI is available at: {Address}/swagger/index.html", address);
+    
+    var configuration = builder.Configuration;
+
+    // Retrieve configuration values from appsettings.json
+    var bucketName = configuration["Couchbase:BucketName"];
+    if (bucketName == null) return;
     var bucket = app.Services.GetRequiredService<IBucketProvider>().GetBucketAsync(bucketName).GetAwaiter().GetResult();
 
     const string scopeName = "inventory";
@@ -109,7 +124,7 @@ if (bucketName != null)
     {
         throw new InvalidOperationException("The 'inventory' scope does not exist in 'travel-sample' bucket.");
     }
-}
+});
 
 // Configure the HTTP request pipeline.
 app.UseSwagger();
@@ -1326,6 +1341,8 @@ app.MapDelete("/api/v1/route/{id}", async(string id) =>
     });
 
 app.Run();
+
+
 
 // required for integration testing from asp.net
 // https://docs.microsoft.com/en-us/aspnet/core/test/integration-tests?view=aspnetcore-7.0
