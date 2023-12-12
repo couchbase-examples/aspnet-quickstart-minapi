@@ -1,4 +1,5 @@
 using System.Text;
+using Couchbase;
 using Couchbase.Core.Exceptions.KeyValue;
 using Couchbase.Extensions.DependencyInjection;
 using Couchbase.KeyValue;
@@ -110,20 +111,36 @@ lifetime.ApplicationStarted.Register(() =>
 
     // Retrieve configuration values from appsettings.json
     var bucketName = configuration["Couchbase:BucketName"];
-    if (bucketName == null) return;
-    var bucket = app.Services.GetRequiredService<IBucketProvider>().GetBucketAsync(bucketName).GetAwaiter().GetResult();
-
-    const string scopeName = "inventory";
+    var scopeName = configuration["Couchbase:ScopeName"];
     
-    // get inventory scope
+    if (string.IsNullOrEmpty(bucketName))
+    {
+        throw new InvalidOperationException("Bucket name is not provided in the configuration.");
+    }
+
+    if (string.IsNullOrEmpty(scopeName))
+    {
+        throw new InvalidOperationException("Scope name is not provided in the configuration.");
+    }
+
+    IBucket bucket;
     try
     {
-        inventoryScope = bucket.ScopeAsync(scopeName).GetAwaiter().GetResult();
+        bucket = app.Services.GetRequiredService<IBucketProvider>().GetBucketAsync(bucketName).GetAwaiter().GetResult();
     }
     catch (Exception)
     {
-        throw new InvalidOperationException("The 'inventory' scope does not exist in 'travel-sample' bucket.");
+        throw new InvalidOperationException("Ensure that you have the travel-sample bucket loaded in the cluster.");
     }
+
+    var scopes = bucket.Collections.GetAllScopesAsync().GetAwaiter().GetResult();
+    
+    if (!(scopes.Any(s => s.Name == scopeName)))
+    {
+        throw new InvalidOperationException("Inventory scope does not exist in the bucket. Ensure that you have the inventory scope in your travel-sample bucket.");
+    }
+    
+    inventoryScope = bucket.ScopeAsync(scopeName).GetAwaiter().GetResult();
 });
 
 // Configure the HTTP request pipeline.
