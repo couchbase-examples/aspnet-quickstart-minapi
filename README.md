@@ -91,7 +91,7 @@ docker build -t couchbase-aspnet-minapi-quickstart .
   - Run the docker image
 ```shell 
 cd aspnet-minapi-quickstart-travelsample
-docker run -p 8080:8080 couchbase-aspnet-minapi-quickstart
+docker run -d -p 8080:8080 --name couchbase-dotnet-container couchbase-aspnet-minapi-quickstart
 ```
 
 You can access the Application on http://localhost:8080/swagger/index.html
