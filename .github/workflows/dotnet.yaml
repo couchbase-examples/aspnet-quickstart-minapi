@@ -1,0 +1,45 @@
+name: ASP.NET
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+    schedule:
+      - cron: "0 8 * * *"
+env:
+  ASPNETCORE_ENVIRONMENT: "Testing"
+  DOTNET_ENVIRONMENT: "Testing"
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Check Memory Free
+        run: |
+          free -m
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: 8.0.x
+      - name: Restore dependencies
+        run: |
+          cd src/Couchbase.TravelSample  
+          dotnet restore
+      - name: Build
+        run: |
+          cd src/Couchbase.TravelSample  
+          dotnet build --configuration Debug --no-restore 
+      - name: Test
+        run: |
+          cd src/Couchbase.TravelSample.Tests  
+          timeout 120 dotnet test --no-build --verbosity normal 
+      - name: Report Status
+        if: always()
+        uses: ravsamhq/notify-slack-action@v1
+        with:
+          status: ${{ job.status }}
+          notification_title: "Repo: *{repo}*"
+          message_format: "{emoji}    *{status_message}* in <{repo_url}|{repo}@{branch}> on <{commit_url}|{commit_sha}>"
+          footer: "<{run_url}|View Full Run on GitHub>"
+          env:
+            SLACK_WEBHOOK_URL: ${{ secrets.ACTION_MONITORING_SLACK }}

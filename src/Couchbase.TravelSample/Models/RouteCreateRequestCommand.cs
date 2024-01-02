@@ -1,8 +1,9 @@
 using System.Text.Json.Serialization;
 
+
 namespace Couchbase.TravelSample.Models;
 
-public record Route
+public record RouteCreateRequestCommand
 {
     [JsonPropertyName("airline")]
     public string Airline { get; set; } = string.Empty;
@@ -27,4 +28,19 @@ public record Route
     
     [JsonPropertyName("stops")]
     public int Stops { get; set; }
+
+    public Route GetRoute()
+    {
+        return new Route
+        {
+            Airline = this.Airline,
+            AirlineId = this.AirlineId,
+            DestinationAirport = this.DestinationAirport,
+            Distance = this.Distance,
+            Equipment = this.Equipment,
+            Schedule = this.Schedule,
+            SourceAirport = this.SourceAirport,
+            Stops = this.Stops
+        };
+    }
 }

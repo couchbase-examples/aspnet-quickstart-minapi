@@ -15,13 +15,13 @@ public record Airport
 
     [JsonPropertyName("faa")]
     public string Faa { get; set; } = string.Empty;
+    
+    [JsonPropertyName("geo")]
+    public Geo? Geo { get; set; }
 
     [JsonPropertyName("icao")]
     public string Icao { get; set; } = string.Empty;
 
-    [JsonPropertyName("id")]
-    public string Id { get; set; } = string.Empty;
-
-    [JsonPropertyName("type")]
-    public string Type => "airport";
+    [JsonPropertyName("tz")] 
+    public string Tz { get; set; } = string.Empty;
 }
