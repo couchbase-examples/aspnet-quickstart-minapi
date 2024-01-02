@@ -9,6 +9,8 @@ Often, the first step developers do after creating their database is to create a
 
 Full documentation can be found on the [Couchbase Developer Portal](https://developer.couchbase.com/tutorial-quickstart-csharp-aspnet-minapi/).
 
+If you are looking for a quickstart using [ASP.NET Web API](https://learn.microsoft.com/en-us/aspnet/core/tutorials/first-web-api?view=aspnetcore-8.0&tabs=visual-studio), you can find it in this [repo](https://github.com/couchbase-examples/aspnet-quickstart).
+
 ## Prerequisites
 To run this prebuilt project, you will need:
 
