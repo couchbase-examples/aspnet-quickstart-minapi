@@ -32,7 +32,7 @@ jobs:
       - name: Test
         run: |
           cd src/Couchbase.TravelSample.Tests  
-          dotnet test --no-build --verbosity normal 
+          timeout 120 dotnet test --no-build --verbosity normal 
       - name: Report Status
         if: always()
         uses: ravsamhq/notify-slack-action@v1
