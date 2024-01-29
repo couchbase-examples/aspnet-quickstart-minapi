@@ -93,12 +93,10 @@ docker build -t couchbase-aspnet-minapi-quickstart .
   - Run the docker image
 ```shell 
 cd aspnet-minapi-quickstart-travelsample
-docker run -d -p 8080:8080 --name couchbase-dotnet-container couchbase-aspnet-minapi-quickstart
+docker run -e DB_CONN_STR=<connection_string> -e DB_USERNAME=<user_with_read_write_permission_to_travel-sample_bucket> -e DB_PASSWORD=<password_for_user> -p 8080:8080 couchbase-aspnet-minapi-quickstart
 ```
 
 You can access the Application on http://localhost:8080/swagger/index.html
-
->**Note:** Make the configuration changes inside `appsettings.json` file while running using docker.
 
 ### Verifying the Application
 
