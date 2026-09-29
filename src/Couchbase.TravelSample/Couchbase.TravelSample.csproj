@@ -9,11 +9,11 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="Couchbase.Extensions.DependencyInjection" Version="3.9.3" />
+        <PackageReference Include="Couchbase.Extensions.DependencyInjection" Version="3.9.6" />
         <PackageReference Include="FluentValidation" Version="12.1.1" />
-        <PackageReference Include="CouchbaseNetClient" Version="3.9.3" />
+        <PackageReference Include="CouchbaseNetClient" Version="3.9.6" />
         <PackageReference Include="FluentValidation.DependencyInjectionExtensions" Version="12.1.1" />
-        <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="8.0.22" />
+        <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="8.0.31" />
         <PackageReference Include="Swashbuckle.AspNetCore" Version="6.9.0" />
     </ItemGroup>
 
