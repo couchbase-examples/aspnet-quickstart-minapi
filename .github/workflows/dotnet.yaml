@@ -15,29 +15,23 @@ jobs:
       DB_USERNAME: ${{ vars.DB_USERNAME }}
       DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - name: Check Memory Free
         run: |
           free -m
       - name: Setup .NET
-        uses: actions/setup-dotnet@v1
+        uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 8.0.x
       - name: Restore dependencies
-        run: |
-          cd src/Couchbase.TravelSample  
-          dotnet restore
+        run: dotnet restore Couchbase.TravelSample.sln
       - name: Build
-        run: |
-          cd src/Couchbase.TravelSample  
-          dotnet build --configuration Debug --no-restore 
+        run: dotnet build Couchbase.TravelSample.sln --configuration Debug --no-restore
       - name: Test
-        run: |
-          cd src/Couchbase.TravelSample.Tests  
-          timeout 120 dotnet test --no-build --verbosity normal 
+        run: timeout 300 dotnet test Couchbase.TravelSample.sln --configuration Debug --no-build --verbosity normal
       - name: Report Status
         if: always()
-        uses: ravsamhq/notify-slack-action@v1
+        uses: ravsamhq/notify-slack-action@v2
         with:
           status: ${{ job.status }}
           notify_when: "failure,warnings"
