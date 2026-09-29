@@ -11,7 +11,9 @@ jobs:
   build:
     runs-on: ubuntu-latest
     env:
-      DB_CONN_STR: ${{ vars.DB_CONN_STR }}
+      # network=default: the CI Capella cluster advertises a private-endpoint "external"
+      # alternate address that the SDK auto-selects and GitHub runners cannot reach.
+      DB_CONN_STR: ${{ vars.DB_CONN_STR }}?network=default
       DB_USERNAME: ${{ vars.DB_USERNAME }}
       DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
     steps:
