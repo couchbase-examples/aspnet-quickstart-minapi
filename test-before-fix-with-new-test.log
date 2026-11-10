@@ -1,0 +1,409 @@
+Test run for /src/src/Couchbase.TravelSample.Tests/bin/Debug/net8.0/Couchbase.TravelSample.Tests.dll (.NETCoreApp,Version=v8.0)
+VSTest version 17.11.1 (x64)
+
+Starting test execution, please wait...
+A total of 1 test files matched the specified pattern.
+[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v3.1.5+1b188a7b0a (64-bit .NET 8.0.33)
+[xUnit.net 00:00:00.18]   Discovering: Couchbase.TravelSample.Tests
+[xUnit.net 00:00:00.27]   Discovered:  Couchbase.TravelSample.Tests
+[xUnit.net 00:00:00.33]   Starting:    Couchbase.TravelSample.Tests
+info: Microsoft.Hosting.Lifetime[14]
+      Now listening on: http://*:8080
+info: Microsoft.Hosting.Lifetime[14]
+      Now listening on: http://*:8080
+info: Microsoft.Hosting.Lifetime[14]
+      Now listening on: http://*:8080
+info: Microsoft.Hosting.Lifetime[14]
+      Now listening on: http://*:8080
+info: Program[0]
+      Swagger UI is available at: http://*:8080/swagger/index.html
+info: Program[0]
+      Swagger UI is available at: http://*:8080/swagger/index.html
+info: Program[0]
+      Swagger UI is available at: http://*:8080/swagger/index.html
+info: Program[0]
+      Swagger UI is available at: http://*:8080/swagger/index.html
+info: Couchbase.DnsClientDnsResolver[0]
+      There was an error attempting to resolve hosts using DNS-SRV - Non-Existent Domain
+info: Couchbase.DnsClientDnsResolver[0]
+      There was an error attempting to resolve hosts using DNS-SRV - Non-Existent Domain
+info: Couchbase.Core.ClusterContext[0]
+      Bootstrapping: the DNS SRV succeeded, but no records were returned for couchbase://localhost/.
+info: Couchbase.Core.ClusterContext[0]
+      Bootstrapping: the DNS SRV succeeded, but no records were returned for couchbase://localhost/.
+info: Couchbase.Core.IO.Connections.Channels.ChannelConnectionPool[10000]
+      Using the ChannelConnectionPool.
+info: Couchbase.Core.IO.Connections.Channels.ChannelConnectionPool[10000]
+      Using the ChannelConnectionPool.
+info: Couchbase.DnsClientDnsResolver[0]
+      There was an error attempting to resolve hosts using DNS-SRV - Non-Existent Domain
+info: Couchbase.Core.ClusterContext[0]
+      Bootstrapping: the DNS SRV succeeded, but no records were returned for couchbase://localhost/.
+info: Couchbase.Core.IO.Connections.Channels.ChannelConnectionPool[10000]
+      Using the ChannelConnectionPool.
+info: Couchbase.DnsClientDnsResolver[0]
+      There was an error attempting to resolve hosts using DNS-SRV - Non-Existent Domain
+info: Couchbase.Core.ClusterContext[0]
+      Bootstrapping: the DNS SRV succeeded, but no records were returned for couchbase://localhost/.
+info: Couchbase.Core.IO.Connections.Channels.ChannelConnectionPool[10000]
+      Using the ChannelConnectionPool.
+info: Couchbase.Core.IO.Authentication.ScramShaMechanism[6000]
+      v=CiJ46H9vwT6+wmJtuuLVTJo1vUSjMVqCVCMvw2M+z0ELgRcVZ5YZw9XFjnKiO3IDmKJIv0H5/MuuWxFj4TrviQ==
+info: Couchbase.Core.IO.Authentication.ScramShaMechanism[6000]
+      v=10Ym9zE9IY1RjwRpppm0IcwIIKyoYXOLQ2vi+awHEbNou67wlrIHYU3JYfTofjxio32gnW77abqlErr27b+93w==
+info: Couchbase.Core.IO.Authentication.ScramShaMechanism[6000]
+      v=GpnFpQFfQ1mzGySrnRB6DV/FeUNWMV434RHA8NCtFq9i70mleGU/XhGQDeLSL8fI/n+pRdYHn9bixZG2nZkaqg==
+info: Couchbase.Core.IO.Authentication.ScramShaMechanism[6000]
+      v=F10fusKVWfUYqXkMfcy1mpL+YBcD3mPWV85zTDncFp3ssJnFnDmdw/qTNOD5Ng4N+4yJGKAKfemLW1Ih7lM3Uw==
+info: Couchbase.Core.IO.Authentication.ScramShaMechanism[6000]
+      v=uQWCve9325MGNQszv/Uqd4Y2E9/OAkHdn0sRsNUijkqu2NKO7CQ0YGf+7id8VohJPKD+mtpqZczAiDVScTd1UQ==
+info: Couchbase.Core.IO.Authentication.ScramShaMechanism[6000]
+      v=8RySdJHu8LMAvhrDB3p3O+kz8IEJrHSohkD9HuprNyNxCfW2IJgfvkN0PUrLj39AC6EkDf+FVTAg2dMP203dgg==
+info: Couchbase.Core.IO.Authentication.ScramShaMechanism[6000]
+      v=Uq+ZsZ5VXWK83iWh93a6PouHuxeuZXMzecgeVvnFTQNMCO4V8YakUyBZJ4AMGd0i/0ZqdIO7Q7zHdarrON+pOg==
+info: Couchbase.Core.IO.Authentication.ScramShaMechanism[6000]
+      v=b99hZU4fLlMIVnzbpl1QPhN4FlcJ56pak7uBdDFxzw+2t2IG8A5Xegj0457Z68LlBWohOQeuUXnAQTgVLYBuYw==
+info: Couchbase.Core.ClusterContext[0]
+      NetworkResolution [default] using default localhost - rev 1/47
+info: Couchbase.Core.ClusterContext[0]
+      NetworkResolution [default] using default localhost - rev 1/47
+info: Couchbase.Core.ClusterContext[0]
+      Bootstrapping: initializing global bootstrap node [localhost:11210].
+info: Couchbase.Core.ClusterContext[0]
+      Bootstrapping: initializing global bootstrap node [localhost:11210].
+info: Couchbase.Query.QueryClient[0]
+      Enabling Enhanced Prepared Statements
+info: Couchbase.Query.QueryClient[0]
+      Enabling Enhanced Prepared Statements
+info: Couchbase.Query.QueryClient[0]
+      Enabling Read From Replica Feature
+info: Couchbase.Query.QueryClient[0]
+      Enabling Read From Replica Feature
+info: Couchbase.Core.ClusterContext[0]
+      NetworkResolution [default] using default localhost - rev 1/47
+info: Couchbase.Core.ClusterContext[0]
+      Bootstrapping: initializing global bootstrap node [localhost:11210].
+info: Couchbase.Core.ClusterContext[0]
+      NetworkResolution [default] using default localhost - rev 1/47
+info: Couchbase.Core.ClusterContext[0]
+      Bootstrapping: initializing global bootstrap node [localhost:11210].
+info: Couchbase.Query.QueryClient[0]
+      Enabling Enhanced Prepared Statements
+info: Couchbase.Query.QueryClient[0]
+      Enabling Read From Replica Feature
+info: Couchbase.Query.QueryClient[0]
+      Enabling Enhanced Prepared Statements
+info: Couchbase.Query.QueryClient[0]
+      Enabling Read From Replica Feature
+info: Couchbase.Core.ClusterContext[0]
+      Bootstrapping: created a membase bucket for travel-sample.
+info: Couchbase.Core.ClusterContext[0]
+      Bootstrapping: created a membase bucket for travel-sample.
+info: Couchbase.CouchbaseBucket[0]
+      Bootstrapping: server negotiation started for travel-sample.
+info: Couchbase.CouchbaseBucket[0]
+      Bootstrapping: server negotiation started for travel-sample.
+info: Couchbase.Core.ClusterContext[0]
+      Bootstrapping: created a membase bucket for travel-sample.
+info: Couchbase.CouchbaseBucket[0]
+      Bootstrapping: server negotiation started for travel-sample.
+info: Couchbase.Core.ClusterContext[0]
+      Bootstrapping: created a membase bucket for travel-sample.
+info: Couchbase.CouchbaseBucket[0]
+      Bootstrapping: server negotiation started for travel-sample.
+info: Couchbase.Core.ClusterContext[0]
+      NetworkResolution [default] using default localhost - rev 1/59
+info: Couchbase.Core.ClusterContext[0]
+      NetworkResolution [default] using default localhost - rev 1/59
+info: Couchbase.CouchbaseBucket[0]
+      Bootstrapping: server negotiation completed for travel-sample.
+info: Couchbase.CouchbaseBucket[0]
+      Bootstrapping: server negotiation completed for travel-sample.
+info: Couchbase.Core.ClusterContext[0]
+      NetworkResolution [default] using default localhost - rev 1/59
+info: Couchbase.CouchbaseBucket[0]
+      Bootstrapping: server negotiation completed for travel-sample.
+info: Couchbase.Core.ClusterContext[0]
+      NetworkResolution [default] using default localhost - rev 1/59
+info: Couchbase.CouchbaseBucket[0]
+      Bootstrapping: server negotiation completed for travel-sample.
+info: Couchbase.Management.Collections.CollectionManager[0]
+      Attempting to get all scopes - http://localhost:8091/pools/default/buckets/travel-sample/scopes
+info: Couchbase.Management.Collections.CollectionManager[0]
+      Attempting to get all scopes - http://localhost:8091/pools/default/buckets/travel-sample/scopes
+info: Couchbase.Management.Collections.CollectionManager[0]
+      Attempting to get all scopes - http://localhost:8091/pools/default/buckets/travel-sample/scopes
+info: Couchbase.Management.Collections.CollectionManager[0]
+      Attempting to get all scopes - http://localhost:8091/pools/default/buckets/travel-sample/scopes
+warn: Microsoft.AspNetCore.HttpsPolicy.HttpsRedirectionMiddleware[3]
+      Failed to determine the https port for redirect.
+warn: Microsoft.AspNetCore.HttpsPolicy.HttpsRedirectionMiddleware[3]
+      Failed to determine the https port for redirect.
+warn: Microsoft.AspNetCore.HttpsPolicy.HttpsRedirectionMiddleware[3]
+      Failed to determine the https port for redirect.
+  Passed Couchbase.TravelSample.Tests.RouteTests.TestReadInvalidRouteAsync [2 s]
+  Passed Couchbase.TravelSample.Tests.AirportTests.CreateAirportTestAsync [2 s]
+  Passed Couchbase.TravelSample.Tests.RouteTests.DeleteRouteTestAsync [179 ms]
+[xUnit.net 00:00:03.26]     Couchbase.TravelSample.Tests.SwaggerTests.TestSwaggerDocumentVersionIsAcceptedBySwaggerUiAsync [FAIL]
+[xUnit.net 00:00:03.26]       Assert.Contains() Failure: Filter not matched in collection
+crit: Microsoft.Extensions.Hosting.Internal.ApplicationLifetime[8]
+      An error occurred stopping the application
+      System.AggregateException: One or more errors occurred. (Cannot access a disposed object.
+      Object name: 'IServiceProvider'.)
+       ---> System.ObjectDisposedException: Cannot access a disposed object.
+      Object name: 'IServiceProvider'.
+         at Microsoft.Extensions.DependencyInjection.ServiceLookup.ThrowHelper.ThrowObjectDisposedException()
+         at Microsoft.Extensions.DependencyInjection.ServiceProvider.GetService(ServiceIdentifier serviceIdentifier, ServiceProviderEngineScope serviceProviderEngineScope)
+         at Microsoft.Extensions.DependencyInjection.ServiceProvider.GetService(Type serviceType)
+         at Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService(IServiceProvider provider, Type serviceType)
+         at Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService[T](IServiceProvider provider)
+         at Program.<>c__DisplayClass0_0.<<Main>$>b__3() in /src/src/Couchbase.TravelSample/Program.cs:line 155
+         at System.Threading.CancellationTokenSource.Invoke(Delegate d, Object state, CancellationTokenSource source)
+         at System.Threading.ExecutionContext.RunInternal(ExecutionContext executionContext, ContextCallback callback, Object state)
+      --- End of stack trace from previous location ---
+         at System.Threading.ExecutionContext.RunInternal(ExecutionContext executionContext, ContextCallback callback, Object state)
+         at System.Threading.CancellationTokenSource.ExecuteCallbackHandlers(Boolean throwOnFirstException)
+         --- End of inner exception stack trace ---
+         at System.Threading.CancellationTokenSource.ExecuteCallbackHandlers(Boolean throwOnFirstException)
+         at Microsoft.Extensions.Hosting.Internal.ApplicationLifetime.NotifyStopped()
+[xUnit.net 00:00:03.26]       Collection: ["^3\\.0\\.([0123])(?:-rc[012])?$"]
+[xUnit.net 00:00:03.28]       Stack Trace:
+[xUnit.net 00:00:03.28]         /src/src/Couchbase.TravelSample.Tests/IntegrationTests/SwaggerTests.cs(39,0): at Couchbase.TravelSample.Tests.SwaggerTests.TestSwaggerDocumentVersionIsAcceptedBySwaggerUiAsync()
+[xUnit.net 00:00:03.28]         --- End of stack trace from previous location ---
+info: Couchbase.Core.IO.Connections.Channels.ChannelConnectionPool[201]
+      Done processing operations on 15465022246598657607, IsDead: False
+info: Couchbase.Core.IO.Connections.Channels.ChannelConnectionPool[200]
+      Connection 15465022246598657607 was not removed.
+info: Couchbase.Core.IO.Connections.MultiplexingConnection[0]
+      Closing connection 15465022246598657607, waiting 00:01:00 for 0 in-flight operations to complete.
+info: Couchbase.Core.IO.Connections.MultiplexingConnection[0]
+      In-flight operations are complete on connection 15465022246598657607, proceeding to close.
+info: Couchbase.Core.IO.Connections.MultiplexingConnection[0]
+      Closing connection 15465022246598657607
+info: Couchbase.Core.IO.Connections.Channels.ChannelConnectionPool[201]
+      Done processing operations on 14485321608349412874, IsDead: False
+info: Couchbase.Core.IO.Connections.Channels.ChannelConnectionPool[200]
+      Connection 14485321608349412874 was not removed.
+info: Couchbase.Core.IO.Connections.MultiplexingConnection[0]
+      Closing connection 14485321608349412874, waiting 00:01:00 for 0 in-flight operations to complete.
+info: Couchbase.Core.IO.Connections.MultiplexingConnection[0]
+      In-flight operations are complete on connection 14485321608349412874, proceeding to close.
+info: Couchbase.Core.IO.Connections.MultiplexingConnection[0]
+      Closing connection 14485321608349412874
+info: Couchbase.Core.IO.Connections.MultiplexingConnection[0]
+      Close called on already closed connection 15465022246598657607
+info: Couchbase.Core.IO.Connections.MultiplexingConnection[0]
+      Close called on already closed connection 14485321608349412874
+info: Couchbase.Core.IO.Connections.MultiplexingConnection[0]
+      Close called on already closed connection 15465022246598657607
+info: Couchbase.Core.IO.Connections.MultiplexingConnection[0]
+      Close called on already closed connection 14485321608349412874
+info: Couchbase.Client.Transactions.Transactions[0]
+      Creating new Transactions instance, 1 created
+info: Couchbase.Client.Transactions.Transactions[0]
+      Transactions creating new LostTransactionManager
+  Passed Couchbase.TravelSample.Tests.AirportTests.TestDirectConnectionsInvalidAirportAsync [132 ms]
+  Passed Couchbase.TravelSample.Tests.RouteTests.UpdateRouteTestAsync [190 ms]
+  Passed Couchbase.TravelSample.Tests.RouteTests.TestAddDuplicateRouteAsync [34 ms]
+  Passed Couchbase.TravelSample.Tests.RouteTests.GetRouteByIdTestAsync [61 ms]
+  Failed Couchbase.TravelSample.Tests.SwaggerTests.TestSwaggerDocumentVersionIsAcceptedBySwaggerUiAsync [2 s]
+  Error Message:
+   Assert.Contains() Failure: Filter not matched in collection
+Collection: ["^3\\.0\\.([0123])(?:-rc[012])?$"]
+  Stack Trace:
+     at Couchbase.TravelSample.Tests.SwaggerTests.TestSwaggerDocumentVersionIsAcceptedBySwaggerUiAsync() in /src/src/Couchbase.TravelSample.Tests/IntegrationTests/SwaggerTests.cs:line 39
+--- End of stack trace from previous location ---
+  Passed Couchbase.TravelSample.Tests.AirportTests.GetDirectConnectionsTestAsync [283 ms]
+  Passed Couchbase.TravelSample.Tests.RouteTests.TestUpdateWithInvalidDocumentAsync [170 ms]
+  Passed Couchbase.TravelSample.Tests.RouteTests.CreateRouteTestAsync [25 ms]
+info: Couchbase.Core.IO.Connections.Channels.ChannelConnectionPool[201]
+      Done processing operations on 6894893967695849329, IsDead: False
+info: Couchbase.Core.IO.Connections.Channels.ChannelConnectionPool[200]
+      Connection 6894893967695849329 was not removed.
+info: Couchbase.Core.IO.Connections.MultiplexingConnection[0]
+      Closing connection 6894893967695849329, waiting 00:01:00 for 0 in-flight operations to complete.
+info: Couchbase.Core.IO.Connections.MultiplexingConnection[0]
+      In-flight operations are complete on connection 6894893967695849329, proceeding to close.
+info: Couchbase.Core.IO.Connections.MultiplexingConnection[0]
+      Closing connection 6894893967695849329
+info: Couchbase.Core.IO.Connections.Channels.ChannelConnectionPool[201]
+      Done processing operations on 13571245169020100947, IsDead: False
+info: Couchbase.Core.IO.Connections.Channels.ChannelConnectionPool[200]
+      Connection 13571245169020100947 was not removed.
+info: Couchbase.Core.IO.Connections.MultiplexingConnection[0]
+      Closing connection 13571245169020100947, waiting 00:01:00 for 0 in-flight operations to complete.
+info: Couchbase.Core.IO.Connections.MultiplexingConnection[0]
+      In-flight operations are complete on connection 13571245169020100947, proceeding to close.
+info: Couchbase.Core.IO.Connections.MultiplexingConnection[0]
+      Closing connection 13571245169020100947
+info: Couchbase.Core.IO.Connections.MultiplexingConnection[0]
+      Close called on already closed connection 6894893967695849329
+info: Couchbase.Core.IO.Connections.MultiplexingConnection[0]
+      Close called on already closed connection 13571245169020100947
+info: Couchbase.Client.Transactions.Transactions[0]
+      Creating new Transactions instance, 2 created
+info: Couchbase.Client.Transactions.Transactions[0]
+      Transactions creating new LostTransactionManager
+info: Couchbase.Core.IO.Connections.MultiplexingConnection[0]
+      Close called on already closed connection 6894893967695849329
+info: Couchbase.Core.IO.Connections.MultiplexingConnection[0]
+      Close called on already closed connection 13571245169020100947
+crit: Microsoft.Extensions.Hosting.Internal.ApplicationLifetime[8]
+      An error occurred stopping the application
+      System.AggregateException: One or more errors occurred. (Cannot access a disposed object.
+      Object name: 'IServiceProvider'.)
+       ---> System.ObjectDisposedException: Cannot access a disposed object.
+      Object name: 'IServiceProvider'.
+         at Microsoft.Extensions.DependencyInjection.ServiceLookup.ThrowHelper.ThrowObjectDisposedException()
+         at Microsoft.Extensions.DependencyInjection.ServiceLookup.ServiceProviderEngineScope.GetKeyedService(Type serviceType, Object serviceKey)
+         at Microsoft.Extensions.DependencyInjection.ServiceProviderKeyedServiceExtensions.GetKeyedService[T](IServiceProvider provider, Object serviceKey)
+         at Couchbase.Extensions.DependencyInjection.Internal.CouchbaseLifetimeService.Close()
+         at Program.<>c__DisplayClass0_0.<<Main>$>b__3() in /src/src/Couchbase.TravelSample/Program.cs:line 156
+         at System.Threading.CancellationTokenSource.Invoke(Delegate d, Object state, CancellationTokenSource source)
+         at System.Threading.ExecutionContext.RunInternal(ExecutionContext executionContext, ContextCallback callback, Object state)
+      --- End of stack trace from previous location ---
+         at System.Threading.ExecutionContext.RunInternal(ExecutionContext executionContext, ContextCallback callback, Object state)
+         at System.Threading.CancellationTokenSource.ExecuteCallbackHandlers(Boolean throwOnFirstException)
+         --- End of inner exception stack trace ---
+         at System.Threading.CancellationTokenSource.ExecuteCallbackHandlers(Boolean throwOnFirstException)
+         at Microsoft.Extensions.Hosting.Internal.ApplicationLifetime.NotifyStopped()
+  Passed Couchbase.TravelSample.Tests.RouteTests.TestDeleteNonExistingRouteAsync [10 ms]
+  Passed Couchbase.TravelSample.Tests.RouteTests.TestAddRouteWithoutRequiredFieldsAsync [10 ms]
+  Passed Couchbase.TravelSample.Tests.AirportTests.TestListAirportsInInvalidCountryAsync [247 ms]
+  Passed Couchbase.TravelSample.Tests.AirportTests.TestAddDuplicateAirportAsync [15 ms]
+  Passed Couchbase.TravelSample.Tests.AirportTests.DeleteAirportTestAsync [23 ms]
+  Passed Couchbase.TravelSample.Tests.AirportTests.TestAddAirportWithoutRequiredFieldsAsync [13 ms]
+  Passed Couchbase.TravelSample.Tests.AirportTests.TestReadInvalidAirportAsync [11 ms]
+  Passed Couchbase.TravelSample.Tests.AirportTests.UpdateAirportTestAsync [28 ms]
+  Passed Couchbase.TravelSample.Tests.AirportTests.TestUpdateWithInvalidDocumentAsync [10 ms]
+info: Couchbase.Core.IO.Connections.Channels.ChannelConnectionPool[201]
+      Done processing operations on 12360958572482933096, IsDead: False
+info: Couchbase.Core.IO.Connections.Channels.ChannelConnectionPool[200]
+      Connection 12360958572482933096 was not removed.
+info: Couchbase.Core.IO.Connections.MultiplexingConnection[0]
+      Closing connection 12360958572482933096, waiting 00:01:00 for 0 in-flight operations to complete.
+info: Couchbase.Core.IO.Connections.MultiplexingConnection[0]
+      In-flight operations are complete on connection 12360958572482933096, proceeding to close.
+info: Couchbase.Core.IO.Connections.MultiplexingConnection[0]
+      Closing connection 12360958572482933096
+info: Couchbase.Core.IO.Connections.MultiplexingConnection[0]
+      Close called on already closed connection 12360958572482933096
+info: Couchbase.Core.IO.Connections.Channels.ChannelConnectionPool[201]
+      Done processing operations on 10920614036709947284, IsDead: False
+info: Couchbase.Core.IO.Connections.Channels.ChannelConnectionPool[200]
+      Connection 10920614036709947284 was not removed.
+info: Couchbase.Core.IO.Connections.MultiplexingConnection[0]
+      Closing connection 10920614036709947284, waiting 00:01:00 for 0 in-flight operations to complete.
+info: Couchbase.Core.IO.Connections.MultiplexingConnection[0]
+      In-flight operations are complete on connection 10920614036709947284, proceeding to close.
+info: Couchbase.Core.IO.Connections.MultiplexingConnection[0]
+      Closing connection 10920614036709947284
+info: Couchbase.Core.IO.Connections.MultiplexingConnection[0]
+      Close called on already closed connection 12360958572482933096
+info: Couchbase.Core.IO.Connections.MultiplexingConnection[0]
+      Close called on already closed connection 10920614036709947284
+info: Couchbase.Core.IO.Connections.MultiplexingConnection[0]
+      Close called on already closed connection 10920614036709947284
+crit: Microsoft.Extensions.Hosting.Internal.ApplicationLifetime[8]
+      An error occurred stopping the application
+      System.AggregateException: One or more errors occurred. (Cannot access a disposed object.
+      Object name: 'IServiceProvider'.)
+       ---> System.ObjectDisposedException: Cannot access a disposed object.
+      Object name: 'IServiceProvider'.
+         at Microsoft.Extensions.DependencyInjection.ServiceLookup.ThrowHelper.ThrowObjectDisposedException()
+         at Microsoft.Extensions.DependencyInjection.ServiceLookup.ServiceProviderEngineScope.GetKeyedService(Type serviceType, Object serviceKey)
+         at Microsoft.Extensions.DependencyInjection.ServiceProviderKeyedServiceExtensions.GetKeyedService[T](IServiceProvider provider, Object serviceKey)
+         at Couchbase.Extensions.DependencyInjection.Internal.CouchbaseLifetimeService.Close()
+         at Program.<>c__DisplayClass0_0.<<Main>$>b__3() in /src/src/Couchbase.TravelSample/Program.cs:line 156
+         at System.Threading.CancellationTokenSource.Invoke(Delegate d, Object state, CancellationTokenSource source)
+         at System.Threading.ExecutionContext.RunInternal(ExecutionContext executionContext, ContextCallback callback, Object state)
+      --- End of stack trace from previous location ---
+         at System.Threading.ExecutionContext.RunInternal(ExecutionContext executionContext, ContextCallback callback, Object state)
+         at System.Threading.CancellationTokenSource.ExecuteCallbackHandlers(Boolean throwOnFirstException)
+         --- End of inner exception stack trace ---
+         at System.Threading.CancellationTokenSource.ExecuteCallbackHandlers(Boolean throwOnFirstException)
+         at Microsoft.Extensions.Hosting.Internal.ApplicationLifetime.NotifyStopped()
+  Passed Couchbase.TravelSample.Tests.AirportTests.GetAirportByIdTestAsync [21 ms]
+  Passed Couchbase.TravelSample.Tests.AirportTests.TestDeleteNonExistingAirportAsync [5 ms]
+  Passed Couchbase.TravelSample.Tests.AirportTests.TestListAirportsInCountryWithPaginationAsync [911 ms]
+  Passed Couchbase.TravelSample.Tests.AirlineTests.GetToAirportTestAsync [4 s]
+  Passed Couchbase.TravelSample.Tests.AirlineTests.UpdateAirlineTestAsync [47 ms]
+  Passed Couchbase.TravelSample.Tests.AirlineTests.CreateAirlineTestAsync [58 ms]
+  Passed Couchbase.TravelSample.Tests.AirlineTests.DeleteAirlineTestAsync [27 ms]
+  Passed Couchbase.TravelSample.Tests.AirlineTests.TestListAirlinesInInvalidCountryAsync [37 ms]
+  Passed Couchbase.TravelSample.Tests.AirlineTests.TestListAirlinesInCountryWithPaginationAsync [96 ms]
+  Passed Couchbase.TravelSample.Tests.AirlineTests.TestDeleteNonExistingAirlineAsync [6 ms]
+  Passed Couchbase.TravelSample.Tests.AirlineTests.GetAirlineByIdTestAsync [22 ms]
+  Passed Couchbase.TravelSample.Tests.AirlineTests.TestReadInvalidAirlineAsync [4 ms]
+  Passed Couchbase.TravelSample.Tests.AirlineTests.TestAddAirlineWithoutRequiredFieldsAsync [7 ms]
+info: Couchbase.DnsClientDnsResolver[0]
+      There was an error attempting to resolve hosts using DNS-SRV - Non-Existent Domain
+info: Couchbase.Core.ClusterContext[0]
+      Bootstrapping: the DNS SRV succeeded, but no records were returned for couchbase://localhost/.
+info: Couchbase.Core.IO.Connections.Channels.ChannelConnectionPool[10000]
+      Using the ChannelConnectionPool.
+info: Couchbase.Core.IO.Authentication.ScramShaMechanism[6000]
+      v=+SOoiUkdfzz6rrH1AaPwaDNhqlpwK4Ihl16sJd1R1OUWeti5oU8rZK5f8CBbV43HvLvrC1wQaz0XR3K/7VLrXg==
+info: Couchbase.Core.IO.Authentication.ScramShaMechanism[6000]
+      v=TdJNF0F2I7evYVYPAQHq638DuHg5ltTpCAejC/0SBlF5pkaJMWQBiAABLGH9wh3Nnu67XXtBoUsaFbDahI29OA==
+info: Couchbase.Core.ClusterContext[0]
+      NetworkResolution [default] using default localhost - rev 1/47
+info: Couchbase.Core.ClusterContext[0]
+      Bootstrapping: initializing global bootstrap node [localhost:11210].
+  Passed Couchbase.TravelSample.Tests.AirlineTests.TestToAirportInvalidAirportAsync [1 s]
+info: Couchbase.Core.IO.Connections.Channels.ChannelConnectionPool[201]
+      Done processing operations on 2368724628221881380, IsDead: False
+info: Couchbase.Core.IO.Connections.Channels.ChannelConnectionPool[200]
+      Connection 2368724628221881380 was not removed.
+info: Couchbase.Core.IO.Connections.MultiplexingConnection[0]
+      Closing connection 2368724628221881380, waiting 00:01:00 for 0 in-flight operations to complete.
+info: Couchbase.Core.IO.Connections.MultiplexingConnection[0]
+      In-flight operations are complete on connection 2368724628221881380, proceeding to close.
+info: Couchbase.Core.IO.Connections.MultiplexingConnection[0]
+      Closing connection 2368724628221881380
+info: Couchbase.Core.IO.Connections.Channels.ChannelConnectionPool[201]
+      Done processing operations on 17446219901054507970, IsDead: False
+info: Couchbase.Core.IO.Connections.Channels.ChannelConnectionPool[200]
+      Connection 17446219901054507970 was not removed.
+info: Couchbase.Core.IO.Connections.MultiplexingConnection[0]
+      Closing connection 17446219901054507970, waiting 00:01:00 for 0 in-flight operations to complete.
+info: Couchbase.Core.IO.Connections.MultiplexingConnection[0]
+      In-flight operations are complete on connection 17446219901054507970, proceeding to close.
+info: Couchbase.Core.IO.Connections.MultiplexingConnection[0]
+      Closing connection 17446219901054507970
+info: Couchbase.Core.IO.Connections.MultiplexingConnection[0]
+      Close called on already closed connection 2368724628221881380
+info: Couchbase.Core.IO.Connections.MultiplexingConnection[0]
+      Close called on already closed connection 17446219901054507970
+info: Couchbase.Core.IO.Connections.MultiplexingConnection[0]
+      Close called on already closed connection 2368724628221881380
+info: Couchbase.Core.IO.Connections.MultiplexingConnection[0]
+      Close called on already closed connection 17446219901054507970
+crit: Microsoft.Extensions.Hosting.Internal.ApplicationLifetime[8]
+      An error occurred stopping the application
+      System.AggregateException: One or more errors occurred. (Cannot access a disposed object.
+      Object name: 'IServiceProvider'.)
+       ---> System.ObjectDisposedException: Cannot access a disposed object.
+      Object name: 'IServiceProvider'.
+         at Microsoft.Extensions.DependencyInjection.ServiceLookup.ThrowHelper.ThrowObjectDisposedException()
+         at Microsoft.Extensions.DependencyInjection.ServiceLookup.ServiceProviderEngineScope.GetKeyedService(Type serviceType, Object serviceKey)
+         at Microsoft.Extensions.DependencyInjection.ServiceProviderKeyedServiceExtensions.GetKeyedService[T](IServiceProvider provider, Object serviceKey)
+         at Couchbase.Extensions.DependencyInjection.Internal.CouchbaseLifetimeService.Close()
+         at Program.<>c__DisplayClass0_0.<<Main>$>b__3() in /src/src/Couchbase.TravelSample/Program.cs:line 156
+         at System.Threading.CancellationTokenSource.Invoke(Delegate d, Object state, CancellationTokenSource source)
+         at System.Threading.ExecutionContext.RunInternal(ExecutionContext executionContext, ContextCallback callback, Object state)
+      --- End of stack trace from previous location ---
+         at System.Threading.ExecutionContext.RunInternal(ExecutionContext executionContext, ContextCallback callback, Object state)
+         at System.Threading.CancellationTokenSource.ExecuteCallbackHandlers(Boolean throwOnFirstException)
+         --- End of inner exception stack trace ---
+         at System.Threading.CancellationTokenSource.ExecuteCallbackHandlers(Boolean throwOnFirstException)
+         at Microsoft.Extensions.Hosting.Internal.ApplicationLifetime.NotifyStopped()
+[xUnit.net 00:00:07.02]   Finished:    Couchbase.TravelSample.Tests
+  Passed Couchbase.TravelSample.Tests.AirlineTests.TestUpdateWithInvalidDocumentAsync [7 ms]
+  Passed Couchbase.TravelSample.Tests.AirlineTests.TestAddDuplicateAirlineAsync [13 ms]
+
+Test Run Failed.
+Total tests: 36
+     Passed: 35
+     Failed: 1
+ Total time: 8.0026 Seconds
