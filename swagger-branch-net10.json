@@ -1,0 +1,765 @@
+{
+  "openapi": "3.0.4",
+  "info": {
+    "title": "Quickstart in Couchbase with C# and ASP.NET Minimal API",
+    "description": "A quickstart API using C# and ASP.NET with Couchbase and travel-sample data.\n\n\nWe have a visual representation of the API documentation using Swagger which allows you to interact with the API's endpoints directly through the browser. It provides a clear view of the API including endpoints, HTTP methods, request parameters, and response objects.\n\n\nClick on an individual endpoint to expand it and see detailed information. This includes the endpoint's description, possible response status codes, and the request parameters it accepts.\n\n\nTrying Out the API\n\n\nYou can try out an API by clicking on the \"Try it out\" button next to the endpoints.\n\n\n- Parameters: If an endpoint requires parameters, Swagger UI provides input boxes for you to fill in. This could include path parameters, query strings, headers, or the body of a POST/PUT request.\n\n\n- Execution: Once you've inputted all the necessary parameters, you can click the \"Execute\" button to make a live API call. Swagger UI will send the request to the API and display the response directly in the documentation. This includes the response code, response headers, and response body.\n\n\nModels\n\n\nSwagger documents the structure of request and response bodies using models. These models define the expected data structure using JSON schema and are extremely helpful in understanding what data to send and expect.\n\n\nFor details on the API, please check the tutorial on the Couchbase Developer Portal: https://developer.couchbase.com/tutorial-quickstart-csharp-aspnet\n\n\n",
+    "version": "1.0"
+  },
+  "paths": {
+    "/api/v1/airline/list": {
+      "get": {
+        "tags": [
+          "Airline"
+        ],
+        "description": "Get list of Airlines. Optionally, you can filter the list by Country.\n\nThis provides an example of using SQL++ query in Couchbase to fetch a list of documents matching the specified criteria.\n\n Class: [`Program.cs`](https://github.com/couchbase-examples/aspnet-minapi-quickstart-travelsample/blob/main/src/Couchbase.TravelSample/Program.cs)",
+        "parameters": [
+          {
+            "name": "country",
+            "in": "query",
+            "description": "Country (Example: France, United Kingdom, United States)",
+            "schema": {
+              "type": "string",
+              "description": "Country (Example: France, United Kingdom, United States)"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Number of airlines to return (page size). Default value: 10.",
+            "schema": {
+              "type": "integer",
+              "description": "Number of airlines to return (page size). Default value: 10.",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "description": "Number of airlines to skip (for pagination). Default value: 0.",
+            "schema": {
+              "type": "integer",
+              "description": "Number of airlines to skip (for pagination). Default value: 0.",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of airlines"
+          },
+          "500": {
+            "description": "Unexpected Error"
+          }
+        }
+      }
+    },
+    "/api/v1/airline/to-airport": {
+      "get": {
+        "tags": [
+          "Airline"
+        ],
+        "description": "Get Airlines flying to specified destination Airport.\n\nThis provides an example of using SQL++ query in Couchbase to fetch a list of documents matching the specified criteria.\n\n Class: [`Program.cs`](https://github.com/couchbase-examples/aspnet-minapi-quickstart-travelsample/blob/main/src/Couchbase.TravelSample/Program.cs)",
+        "parameters": [
+          {
+            "name": "airport",
+            "in": "query",
+            "description": "Destination airport (Example: SFO, JFK, LAX)",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "Destination airport (Example: SFO, JFK, LAX)"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Number of airlines to return (page size). Default value: 10.",
+            "schema": {
+              "type": "integer",
+              "description": "Number of airlines to return (page size). Default value: 10.",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "description": "Number of airlines to skip (for pagination). Default value: 0.",
+            "schema": {
+              "type": "integer",
+              "description": "Number of airlines to skip (for pagination). Default value: 0.",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of airlines"
+          },
+          "500": {
+            "description": "Unexpected Error"
+          }
+        }
+      }
+    },
+    "/api/v1/airline/{id}": {
+      "get": {
+        "tags": [
+          "Airline"
+        ],
+        "description": "Get Airline with specified ID.\n\nThis provides an example of using Key Value operations in Couchbase to get a document with specified ID.\n\n Class: [`Program.cs`](https://github.com/couchbase-examples/aspnet-minapi-quickstart-travelsample/blob/main/src/Couchbase.TravelSample/Program.cs)",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Airline ID like airline_10",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "Airline ID like airline_10"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Found Airline"
+          },
+          "404": {
+            "description": "Airline ID not found"
+          },
+          "500": {
+            "description": "Unexpected Error"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Airline"
+        ],
+        "description": "Create Airline with specified ID.\n\nThis provides an example of using Key Value operations in Couchbase to create a new document with a specified ID.\n\n Class: [`Program.cs`](https://github.com/couchbase-examples/aspnet-minapi-quickstart-travelsample/blob/main/src/Couchbase.TravelSample/Program.cs)",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Airline ID like airline_10",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "Airline ID like airline_10"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AirlineCreateRequestCommand"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created"
+          },
+          "409": {
+            "description": "Airline already exists"
+          },
+          "500": {
+            "description": "Unexpected Error"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Airline"
+        ],
+        "description": "Update Airline with specified ID.\n\nThis provides an example of using Key Value operations in Couchbase to upsert a document with specified ID.\n\n Class: [`Program.cs`](https://github.com/couchbase-examples/aspnet-minapi-quickstart-travelsample/blob/main/src/Couchbase.TravelSample/Program.cs)",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Airline ID like airline_10",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "Airline ID like airline_10"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AirlineCreateRequestCommand"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Airline Updated"
+          },
+          "404": {
+            "description": "Airline ID not found"
+          },
+          "500": {
+            "description": "Unexpected Error"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Airline"
+        ],
+        "description": "Delete Airline with specified ID.\n\nThis provides an example of using Key Value operations in Couchbase to delete a document with specified ID.\n\n Class: [`Program.cs`](https://github.com/couchbase-examples/aspnet-minapi-quickstart-travelsample/blob/main/src/Couchbase.TravelSample/Program.cs)",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Airline ID like airline_10",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "Airline ID like airline_10"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Airline Deleted"
+          },
+          "404": {
+            "description": "Airline ID not found"
+          },
+          "500": {
+            "description": "Unexpected Error"
+          }
+        }
+      }
+    },
+    "/api/v1/airport/list": {
+      "get": {
+        "tags": [
+          "Airport"
+        ],
+        "description": "Get list of Airports. Optionally, you can filter the list by Country.\n\nThis provides an example of using a SQL++ query in Couchbase to fetch a list of documents matching the specified criteria.\n\n Class: [`Program.cs`](https://github.com/couchbase-examples/aspnet-minapi-quickstart-travelsample/blob/main/src/Couchbase.TravelSample/Program.cs)",
+        "parameters": [
+          {
+            "name": "country",
+            "in": "query",
+            "description": "Country (Example: United Kingdom, France, United States)",
+            "schema": {
+              "type": "string",
+              "description": "Country (Example: United Kingdom, France, United States)"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Number of airports to return (page size). Default value: 10.",
+            "schema": {
+              "type": "integer",
+              "description": "Number of airports to return (page size). Default value: 10.",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "description": "Number of airports to skip (for pagination). Default value: 0.",
+            "schema": {
+              "type": "integer",
+              "description": "Number of airports to skip (for pagination). Default value: 0.",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of airports"
+          },
+          "500": {
+            "description": "Unexpected Error"
+          }
+        }
+      }
+    },
+    "/api/v1/airport/direct-connections": {
+      "get": {
+        "tags": [
+          "Airport"
+        ],
+        "description": "Get Direct Connections from specified Airport.\n\nThis provides an example of using a SQL++ query in Couchbase to fetch a list of documents matching the specified criteria.\n\n Class: [`Program.cs`](https://github.com/couchbase-examples/aspnet-minapi-quickstart-travelsample/blob/main/src/Couchbase.TravelSample/Program.cs)",
+        "parameters": [
+          {
+            "name": "airport",
+            "in": "query",
+            "description": "Source airport (Example: SFO, LHR, CDG)",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "Source airport (Example: SFO, LHR, CDG)"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Number of direct connections to return (page size). Default value: 10.",
+            "schema": {
+              "type": "integer",
+              "description": "Number of direct connections to return (page size). Default value: 10.",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "description": "Number of direct connections to skip (for pagination). Default value: 0.",
+            "schema": {
+              "type": "integer",
+              "description": "Number of direct connections to skip (for pagination). Default value: 0.",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of direct connections"
+          },
+          "500": {
+            "description": "Unexpected Error"
+          }
+        }
+      }
+    },
+    "/api/v1/airport/{id}": {
+      "get": {
+        "tags": [
+          "Airport"
+        ],
+        "description": "Get Airport with specified ID.\n\nThis provides an example of using Key Value operations in Couchbase to get a document with specified ID.\n\n Class: [`Program.cs`](https://github.com/couchbase-examples/aspnet-minapi-quickstart-travelsample/blob/main/src/Couchbase.TravelSample/Program.cs)",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Airport ID like airport_1273",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "Airport ID like airport_1273"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Found Airport"
+          },
+          "404": {
+            "description": "Airport ID not found"
+          },
+          "500": {
+            "description": "Unexpected Error"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Airport"
+        ],
+        "description": "Create Airport with specified ID.\n\nThis provides an example of using Key Value operations in Couchbase to create a new document with a specified ID.\n\n Class: [`Program.cs`](https://github.com/couchbase-examples/aspnet-minapi-quickstart-travelsample/blob/main/src/Couchbase.TravelSample/Program.cs)",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Airport ID like airport_1273",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "Airport ID like airport_1273"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AirportCreateRequestCommand"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created"
+          },
+          "409": {
+            "description": "Airport already exists"
+          },
+          "500": {
+            "description": "Unexpected Error"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Airport"
+        ],
+        "description": "Update Airport with specified ID.\n\nThis provides an example of using Key Value operations in Couchbase to upsert a document with specified ID.\n\n Class: [`Program.cs`](https://github.com/couchbase-examples/aspnet-minapi-quickstart-travelsample/blob/main/src/Couchbase.TravelSample/Program.cs)",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Airport ID like airport_1273",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "Airport ID like airport_1273"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AirportCreateRequestCommand"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Airport Updated"
+          },
+          "404": {
+            "description": "Airport ID not found"
+          },
+          "500": {
+            "description": "Unexpected Error"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Airport"
+        ],
+        "description": "Delete Airport with specified ID.\n\nThis provides an example of using Key Value operations in Couchbase to delete a document with specified ID.\n\n Class: [`Program.cs`](https://github.com/couchbase-examples/aspnet-minapi-quickstart-travelsample/blob/main/src/Couchbase.TravelSample/Program.cs)",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Airport ID like airport_1273",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "Airport ID like airport_1273"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Airport Deleted"
+          },
+          "404": {
+            "description": "Airport ID not found"
+          },
+          "500": {
+            "description": "Unexpected Error"
+          }
+        }
+      }
+    },
+    "/api/v1/route/{id}": {
+      "get": {
+        "tags": [
+          "Route"
+        ],
+        "description": "Get Route with specified ID.\n\nThis provides an example of using Key Value operations in Couchbase to get a document with specified ID.\n\n Class: [`Program.cs`](https://github.com/couchbase-examples/aspnet-minapi-quickstart-travelsample/blob/main/src/Couchbase.TravelSample/Program.cs)",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Route ID like route_10000",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "Route ID like route_10000"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Found Route"
+          },
+          "404": {
+            "description": "Route ID not found"
+          },
+          "500": {
+            "description": "Unexpected Error"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Route"
+        ],
+        "description": "Create Route with specified ID.\n\nThis provides an example of using Key Value operations in Couchbase to create a new document with a specified ID.\n\n Class: [`Program.cs`](https://github.com/couchbase-examples/aspnet-minapi-quickstart-travelsample/blob/main/src/Couchbase.TravelSample/Program.cs)",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Route ID like route_10000",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "Route ID like route_10000"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RouteCreateRequestCommand"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created"
+          },
+          "409": {
+            "description": "Route already exists"
+          },
+          "500": {
+            "description": "Unexpected Error"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Route"
+        ],
+        "description": "Update Route with specified ID.\n\nThis provides an example of using Key Value operations in Couchbase to upsert a document with specified ID.\n\n Class: [`Program.cs`](https://github.com/couchbase-examples/aspnet-minapi-quickstart-travelsample/blob/main/src/Couchbase.TravelSample/Program.cs)",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Route ID like route_10000",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "Route ID like route_10000"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RouteCreateRequestCommand"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Route Updated"
+          },
+          "404": {
+            "description": "Route ID not found"
+          },
+          "500": {
+            "description": "Unexpected Error"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Route"
+        ],
+        "description": "Delete Route with specified ID.\n\nThis provides an example of using Key Value operations in Couchbase to delete a document with specified ID.\n\n Class: [`Program.cs`](https://github.com/couchbase-examples/aspnet-minapi-quickstart-travelsample/blob/main/src/Couchbase.TravelSample/Program.cs)",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Route ID like route_10000",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "Route ID like route_10000"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Route Deleted"
+          },
+          "404": {
+            "description": "Route ID not found"
+          },
+          "500": {
+            "description": "Unexpected Error"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "AirlineCreateRequestCommand": {
+        "type": "object",
+        "properties": {
+          "callsign": {
+            "type": "string",
+            "nullable": true
+          },
+          "country": {
+            "type": "string",
+            "nullable": true
+          },
+          "iata": {
+            "type": "string",
+            "nullable": true
+          },
+          "icao": {
+            "type": "string",
+            "nullable": true
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "AirportCreateRequestCommand": {
+        "type": "object",
+        "properties": {
+          "airportname": {
+            "type": "string",
+            "nullable": true
+          },
+          "city": {
+            "type": "string",
+            "nullable": true
+          },
+          "country": {
+            "type": "string",
+            "nullable": true
+          },
+          "faa": {
+            "type": "string",
+            "nullable": true
+          },
+          "geo": {
+            "$ref": "#/components/schemas/Geo"
+          },
+          "icao": {
+            "type": "string",
+            "nullable": true
+          },
+          "tz": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "Geo": {
+        "type": "object",
+        "properties": {
+          "alt": {
+            "type": "number",
+            "format": "double"
+          },
+          "lat": {
+            "type": "number",
+            "format": "double"
+          },
+          "lon": {
+            "type": "number",
+            "format": "double"
+          }
+        },
+        "additionalProperties": false
+      },
+      "RouteCreateRequestCommand": {
+        "type": "object",
+        "properties": {
+          "airline": {
+            "type": "string",
+            "nullable": true
+          },
+          "airlineid": {
+            "type": "string",
+            "nullable": true
+          },
+          "destinationairport": {
+            "type": "string",
+            "nullable": true
+          },
+          "distance": {
+            "type": "number",
+            "format": "double"
+          },
+          "equipment": {
+            "type": "string",
+            "nullable": true
+          },
+          "schedule": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Schedule"
+            },
+            "nullable": true
+          },
+          "sourceairport": {
+            "type": "string",
+            "nullable": true
+          },
+          "stops": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
+      "Schedule": {
+        "type": "object",
+        "properties": {
+          "day": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "flight": {
+            "type": "string",
+            "nullable": true
+          },
+          "utc": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "Airline"
+    },
+    {
+      "name": "Airport"
+    },
+    {
+      "name": "Route"
+    }
+  ]
+}
