@@ -4,7 +4,9 @@ using Couchbase.Core.Exceptions.KeyValue;
 using Couchbase.Extensions.DependencyInjection;
 using Couchbase.KeyValue;
 using Couchbase.TravelSample.Models;
-using Microsoft.OpenApi.Models;
+using Microsoft.OpenApi;
+using System.ComponentModel;
+using Microsoft.AspNetCore.Mvc;
 using FluentValidation;
 using Microsoft.AspNetCore.Hosting.Server;
 using Microsoft.AspNetCore.Hosting.Server.Features;
@@ -158,7 +160,13 @@ app.Lifetime.ApplicationStopped.Register(() =>
 
 app.UseHttpsRedirection();
 
-app.MapGet("/api/v1/airport/list", async (string? country, int? limit, int? offset) =>
+app.MapGet("/api/v1/airport/list",
+    [ProducesResponseType(StatusCodes.Status200OK, Description = "List of airports")]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError, Description = "Unexpected Error")]
+    async (
+        [Description("Country (Example: United Kingdom, France, United States)")] string? country,
+        [Description("Number of airports to return (page size). Default value: 10.")] int? limit,
+        [Description("Number of airports to skip (for pagination). Default value: 0.")] int? offset) =>
     {
         try
         {
@@ -218,47 +226,15 @@ app.MapGet("/api/v1/airport/list", async (string? country, int? limit, int? offs
         }
     })
     .WithTags("Airport")
-    .WithOpenApi(operation => new(operation)
-    {
-        Description = "Get list of Airports. Optionally, you can filter the list by Country.\n\nThis provides an example of using a SQL++ query in Couchbase to fetch a list of documents matching the specified criteria.\n\n Class: [`Program.cs`](https://github.com/couchbase-examples/aspnet-minapi-quickstart-travelsample/blob/main/src/Couchbase.TravelSample/Program.cs)",
-        Parameters = new List<OpenApiParameter>
-        {
-            new OpenApiParameter
-            {
-                Name = "country",
-                In = ParameterLocation.Query,
-                Description = "Country (Example: United Kingdom, France, United States)",
-                Required = false
-            },
-            new OpenApiParameter
-            {
-                Name = "limit",
-                In = ParameterLocation.Query,
-                Description = "Number of airports to return (page size). Default value: 10.",
-                Required = false
-            },
-            new OpenApiParameter
-            {
-                Name = "offset",
-                In = ParameterLocation.Query,
-                Description = "Number of airports to skip (for pagination). Default value: 0.",
-                Required = false
-            }
-        },
-        Responses = new OpenApiResponses
-        {
-            ["200"] = new OpenApiResponse
-            {
-                Description = "List of airports"
-            },
-            ["500"] = new OpenApiResponse
-            {
-                Description = "Unexpected Error"
-            }
-        }
-    });
+    .WithDescription("Get list of Airports. Optionally, you can filter the list by Country.\n\nThis provides an example of using a SQL++ query in Couchbase to fetch a list of documents matching the specified criteria.\n\n Class: [`Program.cs`](https://github.com/couchbase-examples/aspnet-minapi-quickstart-travelsample/blob/main/src/Couchbase.TravelSample/Program.cs)");
 
-app.MapGet("/api/v1/airport/direct-connections", async (string airport, int? limit, int? offset) =>
+app.MapGet("/api/v1/airport/direct-connections",
+    [ProducesResponseType(StatusCodes.Status200OK, Description = "List of direct connections")]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError, Description = "Unexpected Error")]
+    async (
+        [Description("Source airport (Example: SFO, LHR, CDG)")] string airport,
+        [Description("Number of direct connections to return (page size). Default value: 10.")] int? limit,
+        [Description("Number of direct connections to skip (for pagination). Default value: 0.")] int? offset) =>
     {
         try
         {
@@ -295,47 +271,14 @@ app.MapGet("/api/v1/airport/direct-connections", async (string airport, int? lim
         }
     })
     .WithTags("Airport")
-    .WithOpenApi(operation => new(operation)
-    {
-        Description = "Get Direct Connections from specified Airport.\n\nThis provides an example of using a SQL++ query in Couchbase to fetch a list of documents matching the specified criteria.\n\n Class: [`Program.cs`](https://github.com/couchbase-examples/aspnet-minapi-quickstart-travelsample/blob/main/src/Couchbase.TravelSample/Program.cs)",
-        Parameters = new List<OpenApiParameter>
-        {
-            new OpenApiParameter
-            {
-                Name = "airport",
-                In = ParameterLocation.Query,
-                Description = "Source airport (Example: SFO, LHR, CDG)",
-                Required = true
-            },
-            new OpenApiParameter
-            {
-                Name = "limit",
-                In = ParameterLocation.Query,
-                Description = "Number of direct connections to return (page size). Default value: 10.",
-                Required = false
-            },
-            new OpenApiParameter
-            {
-                Name = "offset",
-                In = ParameterLocation.Query,
-                Description = "Number of direct connections to skip (for pagination). Default value: 0.",
-                Required = false
-            }
-        },
-        Responses = new OpenApiResponses
-        {
-            ["200"] = new OpenApiResponse
-            {
-                Description = "List of direct connections"
-            },
-            ["500"] = new OpenApiResponse
-            {
-                Description = "Unexpected Error"
-            }
-        }
-    });
+    .WithDescription("Get Direct Connections from specified Airport.\n\nThis provides an example of using a SQL++ query in Couchbase to fetch a list of documents matching the specified criteria.\n\n Class: [`Program.cs`](https://github.com/couchbase-examples/aspnet-minapi-quickstart-travelsample/blob/main/src/Couchbase.TravelSample/Program.cs)");
 
-app.MapGet("/api/v1/airport/{id}", async (string id) =>
+app.MapGet("/api/v1/airport/{id}",
+    [ProducesResponseType(StatusCodes.Status200OK, Description = "Found Airport")]
+    [ProducesResponseType(StatusCodes.Status404NotFound, Description = "Airport ID not found")]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError, Description = "Unexpected Error")]
+    async (
+        [Description("Airport ID like airport_1273")] string id) =>
     {
         try
         {
@@ -371,37 +314,16 @@ app.MapGet("/api/v1/airport/{id}", async (string id) =>
         return Results.NotFound();
     })
     .WithTags("Airport")
-    .WithOpenApi(operation => new(operation)
-    {
-        Description = "Get Airport with specified ID.\n\nThis provides an example of using Key Value operations in Couchbase to get a document with specified ID.\n\n Class: [`Program.cs`](https://github.com/couchbase-examples/aspnet-minapi-quickstart-travelsample/blob/main/src/Couchbase.TravelSample/Program.cs)",
-        Parameters = new List<OpenApiParameter>
-        {
-            new OpenApiParameter
-            {
-                Name = "id",
-                In = ParameterLocation.Path,
-                Description = "Airport ID like airport_1273",
-                Required = true
-            }
-        },
-        Responses = new OpenApiResponses
-        {
-            ["200"] = new OpenApiResponse
-            {
-                Description = "Found Airport"
-            },
-            ["404"] = new OpenApiResponse
-            {
-                Description = "Airport ID not found"
-            },
-            ["500"] = new OpenApiResponse
-            {
-                Description = "Unexpected Error"
-            }
-        }
-    });
+    .WithDescription("Get Airport with specified ID.\n\nThis provides an example of using Key Value operations in Couchbase to get a document with specified ID.\n\n Class: [`Program.cs`](https://github.com/couchbase-examples/aspnet-minapi-quickstart-travelsample/blob/main/src/Couchbase.TravelSample/Program.cs)");
 
-app.MapPost("/api/v1/airport/{id}", async (string id, AirportCreateRequestCommand request, IValidator<AirportCreateRequestCommand> validator) =>
+app.MapPost("/api/v1/airport/{id}",
+    [ProducesResponseType(StatusCodes.Status201Created, Description = "Created")]
+    [ProducesResponseType(StatusCodes.Status409Conflict, Description = "Airport already exists")]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError, Description = "Unexpected Error")]
+    async (
+        [Description("Airport ID like airport_1273")] string id,
+        AirportCreateRequestCommand request,
+        IValidator<AirportCreateRequestCommand> validator) =>
     {
         var validation = await validator.ValidateAsync(request);
         if (!validation.IsValid)
@@ -439,37 +361,16 @@ app.MapPost("/api/v1/airport/{id}", async (string id, AirportCreateRequestComman
         }
     })
     .WithTags("Airport")
-    .WithOpenApi(operation => new(operation)
-    {
-        Description = "Create Airport with specified ID.\n\nThis provides an example of using Key Value operations in Couchbase to create a new document with a specified ID.\n\n Class: [`Program.cs`](https://github.com/couchbase-examples/aspnet-minapi-quickstart-travelsample/blob/main/src/Couchbase.TravelSample/Program.cs)",
-        Parameters = new List<OpenApiParameter>
-        {
-            new OpenApiParameter
-            {
-                Name = "id",
-                In = ParameterLocation.Path,
-                Description = "Airport ID like airport_1273",
-                Required = true
-            }
-        },
-        Responses = new OpenApiResponses
-        {
-            ["201"] = new OpenApiResponse
-            {
-                Description = "Created"
-            },
-            ["409"] = new OpenApiResponse
-            {
-                Description = "Airport already exists"
-            },
-            ["500"] = new OpenApiResponse
-            {
-                Description = "Unexpected Error"
-            }
-        }
-    });
+    .WithDescription("Create Airport with specified ID.\n\nThis provides an example of using Key Value operations in Couchbase to create a new document with a specified ID.\n\n Class: [`Program.cs`](https://github.com/couchbase-examples/aspnet-minapi-quickstart-travelsample/blob/main/src/Couchbase.TravelSample/Program.cs)");
 
-app.MapPut("/api/v1/airport/{id}", async (string id, AirportCreateRequestCommand request, IValidator<AirportCreateRequestCommand> validator) =>
+app.MapPut("/api/v1/airport/{id}",
+    [ProducesResponseType(StatusCodes.Status200OK, Description = "Airport Updated")]
+    [ProducesResponseType(StatusCodes.Status404NotFound, Description = "Airport ID not found")]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError, Description = "Unexpected Error")]
+    async (
+        [Description("Airport ID like airport_1273")] string id,
+        AirportCreateRequestCommand request,
+        IValidator<AirportCreateRequestCommand> validator) =>
     {
         var validation = await validator.ValidateAsync(request);
         if (!validation.IsValid)
@@ -513,37 +414,14 @@ app.MapPut("/api/v1/airport/{id}", async (string id, AirportCreateRequestCommand
         return Results.NotFound();
     })
     .WithTags("Airport")
-    .WithOpenApi(operation => new(operation)
-    {
-        Description = "Update Airport with specified ID.\n\nThis provides an example of using Key Value operations in Couchbase to upsert a document with specified ID.\n\n Class: [`Program.cs`](https://github.com/couchbase-examples/aspnet-minapi-quickstart-travelsample/blob/main/src/Couchbase.TravelSample/Program.cs)",
-        Parameters = new List<OpenApiParameter>
-        {
-            new OpenApiParameter
-            {
-                Name = "id",
-                In = ParameterLocation.Path,
-                Description = "Airport ID like airport_1273",
-                Required = true
-            }
-        },
-        Responses = new OpenApiResponses
-        {
-            ["200"] = new OpenApiResponse
-            {
-                Description = "Airport Updated"
-            },
-            ["404"] = new OpenApiResponse
-            {
-                Description = "Airport ID not found"
-            },
-            ["500"] = new OpenApiResponse
-            {
-                Description = "Unexpected Error"
-            }
-        }
-    });
+    .WithDescription("Update Airport with specified ID.\n\nThis provides an example of using Key Value operations in Couchbase to upsert a document with specified ID.\n\n Class: [`Program.cs`](https://github.com/couchbase-examples/aspnet-minapi-quickstart-travelsample/blob/main/src/Couchbase.TravelSample/Program.cs)");
 
-app.MapDelete("/api/v1/airport/{id}", async(string id) => 
+app.MapDelete("/api/v1/airport/{id}",
+    [ProducesResponseType(StatusCodes.Status204NoContent, Description = "Airport Deleted")]
+    [ProducesResponseType(StatusCodes.Status404NotFound, Description = "Airport ID not found")]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError, Description = "Unexpected Error")]
+    async (
+        [Description("Airport ID like airport_1273")] string id) =>
     {
         try
         {
@@ -584,38 +462,15 @@ app.MapDelete("/api/v1/airport/{id}", async(string id) =>
         return Results.NotFound();
     })
     .WithTags("Airport")
-    .WithOpenApi(operation => new(operation)
-    {
-        Description = "Delete Airport with specified ID.\n\nThis provides an example of using Key Value operations in Couchbase to delete a document with specified ID.\n\n Class: [`Program.cs`](https://github.com/couchbase-examples/aspnet-minapi-quickstart-travelsample/blob/main/src/Couchbase.TravelSample/Program.cs)",
-        Parameters = new List<OpenApiParameter>
-        {
-            new OpenApiParameter
-            {
-                Name = "id",
-                In = ParameterLocation.Path,
-                Description = "Airport ID like airport_1273",
-                Required = true
-            }
-        },
-        Responses = new OpenApiResponses
-        {
-            ["204"] = new OpenApiResponse
-            {
-                Description = "Airport Deleted"
-            },
-            ["404"] = new OpenApiResponse
-            {
-                Description = "Airport ID not found"
-            },
-            ["500"] = new OpenApiResponse
-            {
-                Description = "Unexpected Error"
-            }
-        }
-        
-    });
+    .WithDescription("Delete Airport with specified ID.\n\nThis provides an example of using Key Value operations in Couchbase to delete a document with specified ID.\n\n Class: [`Program.cs`](https://github.com/couchbase-examples/aspnet-minapi-quickstart-travelsample/blob/main/src/Couchbase.TravelSample/Program.cs)");
 
-app.MapGet("/api/v1/airline/list", async (string? country, int? limit, int? offset) =>
+app.MapGet("/api/v1/airline/list",
+    [ProducesResponseType(StatusCodes.Status200OK, Description = "List of airlines")]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError, Description = "Unexpected Error")]
+    async (
+        [Description("Country (Example: France, United Kingdom, United States)")] string? country,
+        [Description("Number of airlines to return (page size). Default value: 10.")] int? limit,
+        [Description("Number of airlines to skip (for pagination). Default value: 0.")] int? offset) =>
 {
     try
     {
@@ -670,47 +525,15 @@ app.MapGet("/api/v1/airline/list", async (string? country, int? limit, int? offs
     }
 })
 .WithTags("Airline")
-    .WithOpenApi(operation => new(operation)
-    {
-        Description = "Get list of Airlines. Optionally, you can filter the list by Country.\n\nThis provides an example of using SQL++ query in Couchbase to fetch a list of documents matching the specified criteria.\n\n Class: [`Program.cs`](https://github.com/couchbase-examples/aspnet-minapi-quickstart-travelsample/blob/main/src/Couchbase.TravelSample/Program.cs)",
-        Parameters = new List<OpenApiParameter>
-        {
-            new OpenApiParameter
-            {
-                Name = "country",
-                In = ParameterLocation.Query,
-                Description = "Country (Example: France, United Kingdom, United States)",
-                Required = false
-            },
-            new OpenApiParameter
-            {
-                Name = "limit",
-                In = ParameterLocation.Query,
-                Description = "Number of airlines to return (page size). Default value: 10.",
-                Required = false
-            },
-            new OpenApiParameter
-            {
-                Name = "offset",
-                In = ParameterLocation.Query,
-                Description = "Number of airlines to skip (for pagination). Default value: 0.",
-                Required = false
-            }
-        },
-        Responses = new OpenApiResponses
-        {
-            ["200"] = new OpenApiResponse
-            {
-                Description = "List of airlines"
-            },
-            ["500"] = new OpenApiResponse
-            {
-                Description = "Unexpected Error"
-            }
-        }
-    });
+    .WithDescription("Get list of Airlines. Optionally, you can filter the list by Country.\n\nThis provides an example of using SQL++ query in Couchbase to fetch a list of documents matching the specified criteria.\n\n Class: [`Program.cs`](https://github.com/couchbase-examples/aspnet-minapi-quickstart-travelsample/blob/main/src/Couchbase.TravelSample/Program.cs)");
 
-app.MapGet("/api/v1/airline/to-airport", async (string airport, int? limit, int? offset) =>
+app.MapGet("/api/v1/airline/to-airport",
+    [ProducesResponseType(StatusCodes.Status200OK, Description = "List of airlines")]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError, Description = "Unexpected Error")]
+    async (
+        [Description("Destination airport (Example: SFO, JFK, LAX)")] string airport,
+        [Description("Number of airlines to return (page size). Default value: 10.")] int? limit,
+        [Description("Number of airlines to skip (for pagination). Default value: 0.")] int? offset) =>
     {
         try
         {
@@ -755,47 +578,14 @@ app.MapGet("/api/v1/airline/to-airport", async (string airport, int? limit, int?
         }
     })
     .WithTags("Airline")
-    .WithOpenApi(operation => new(operation)
-    {
-        Description = "Get Airlines flying to specified destination Airport.\n\nThis provides an example of using SQL++ query in Couchbase to fetch a list of documents matching the specified criteria.\n\n Class: [`Program.cs`](https://github.com/couchbase-examples/aspnet-minapi-quickstart-travelsample/blob/main/src/Couchbase.TravelSample/Program.cs)",
-        Parameters = new List<OpenApiParameter>
-        {
-            new OpenApiParameter
-            {
-                Name = "airport",
-                In = ParameterLocation.Query,
-                Description = "Destination airport (Example: SFO, JFK, LAX)",
-                Required = true
-            },
-            new OpenApiParameter
-            {
-                Name = "limit",
-                In = ParameterLocation.Query,
-                Description = "Number of airlines to return (page size). Default value: 10.",
-                Required = false
-            },
-            new OpenApiParameter
-            {
-                Name = "offset",
-                In = ParameterLocation.Query,
-                Description = "Number of airlines to skip (for pagination). Default value: 0.",
-                Required = false
-            }
-        },
-        Responses = new OpenApiResponses
-        {
-            ["200"] = new OpenApiResponse
-            {
-                Description = "List of airlines"
-            },
-            ["500"] = new OpenApiResponse
-            {
-                Description = "Unexpected Error"
-            }
-        }
-    });
+    .WithDescription("Get Airlines flying to specified destination Airport.\n\nThis provides an example of using SQL++ query in Couchbase to fetch a list of documents matching the specified criteria.\n\n Class: [`Program.cs`](https://github.com/couchbase-examples/aspnet-minapi-quickstart-travelsample/blob/main/src/Couchbase.TravelSample/Program.cs)");
 
-app.MapGet("/api/v1/airline/{id}", async (string id) =>
+app.MapGet("/api/v1/airline/{id}",
+    [ProducesResponseType(StatusCodes.Status200OK, Description = "Found Airline")]
+    [ProducesResponseType(StatusCodes.Status404NotFound, Description = "Airline ID not found")]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError, Description = "Unexpected Error")]
+    async (
+        [Description("Airline ID like airline_10")] string id) =>
     {
         try
         {
@@ -831,37 +621,16 @@ app.MapGet("/api/v1/airline/{id}", async (string id) =>
         return Results.NotFound();
     })
     .WithTags("Airline")
-    .WithOpenApi(operation => new(operation)
-    {
-        Description = "Get Airline with specified ID.\n\nThis provides an example of using Key Value operations in Couchbase to get a document with specified ID.\n\n Class: [`Program.cs`](https://github.com/couchbase-examples/aspnet-minapi-quickstart-travelsample/blob/main/src/Couchbase.TravelSample/Program.cs)",
-        Parameters = new List<OpenApiParameter>
-        {
-            new OpenApiParameter
-            {
-                Name = "id",
-                In = ParameterLocation.Path,
-                Description = "Airline ID like airline_10",
-                Required = true
-            }
-        },
-        Responses = new OpenApiResponses
-        {
-            ["200"] = new OpenApiResponse
-            {
-                Description = "Found Airline"
-            },
-            ["404"] = new OpenApiResponse
-            {
-                Description = "Airline ID not found"
-            },
-            ["500"] = new OpenApiResponse
-            {
-                Description = "Unexpected Error"
-            }
-        }
-    });
+    .WithDescription("Get Airline with specified ID.\n\nThis provides an example of using Key Value operations in Couchbase to get a document with specified ID.\n\n Class: [`Program.cs`](https://github.com/couchbase-examples/aspnet-minapi-quickstart-travelsample/blob/main/src/Couchbase.TravelSample/Program.cs)");
 
-app.MapPost("/api/v1/airline/{id}", async (string id, AirlineCreateRequestCommand request, IValidator<AirlineCreateRequestCommand> validator) =>
+app.MapPost("/api/v1/airline/{id}",
+    [ProducesResponseType(StatusCodes.Status201Created, Description = "Created")]
+    [ProducesResponseType(StatusCodes.Status409Conflict, Description = "Airline already exists")]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError, Description = "Unexpected Error")]
+    async (
+        [Description("Airline ID like airline_10")] string id,
+        AirlineCreateRequestCommand request,
+        IValidator<AirlineCreateRequestCommand> validator) =>
     {
         var validation = await validator.ValidateAsync(request);
         if (!validation.IsValid)
@@ -899,37 +668,16 @@ app.MapPost("/api/v1/airline/{id}", async (string id, AirlineCreateRequestComman
         }
     })
     .WithTags("Airline")
-    .WithOpenApi(operation => new(operation)
-    {
-        Description = "Create Airline with specified ID.\n\nThis provides an example of using Key Value operations in Couchbase to create a new document with a specified ID.\n\n Class: [`Program.cs`](https://github.com/couchbase-examples/aspnet-minapi-quickstart-travelsample/blob/main/src/Couchbase.TravelSample/Program.cs)",
-        Parameters = new List<OpenApiParameter>
-        {
-            new OpenApiParameter
-            {
-                Name = "id",
-                In = ParameterLocation.Path,
-                Description = "Airline ID like airline_10",
-                Required = true
-            }
-        },
-        Responses = new OpenApiResponses
-        {
-            ["201"] = new OpenApiResponse
-            {
-                Description = "Created"
-            },
-            ["409"] = new OpenApiResponse
-            {
-                Description = "Airline already exists"
-            },
-            ["500"] = new OpenApiResponse
-            {
-                Description = "Unexpected Error"
-            }
-        }
-    });
+    .WithDescription("Create Airline with specified ID.\n\nThis provides an example of using Key Value operations in Couchbase to create a new document with a specified ID.\n\n Class: [`Program.cs`](https://github.com/couchbase-examples/aspnet-minapi-quickstart-travelsample/blob/main/src/Couchbase.TravelSample/Program.cs)");
 
-app.MapPut("/api/v1/airline/{id}", async (string id, AirlineCreateRequestCommand request, IValidator<AirlineCreateRequestCommand> validator) =>
+app.MapPut("/api/v1/airline/{id}",
+    [ProducesResponseType(StatusCodes.Status200OK, Description = "Airline Updated")]
+    [ProducesResponseType(StatusCodes.Status404NotFound, Description = "Airline ID not found")]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError, Description = "Unexpected Error")]
+    async (
+        [Description("Airline ID like airline_10")] string id,
+        AirlineCreateRequestCommand request,
+        IValidator<AirlineCreateRequestCommand> validator) =>
     {
         var validation = await validator.ValidateAsync(request);
         if (!validation.IsValid)
@@ -974,37 +722,14 @@ app.MapPut("/api/v1/airline/{id}", async (string id, AirlineCreateRequestCommand
         
     })
     .WithTags("Airline")
-    .WithOpenApi(operation => new(operation)
-    {
-        Description = "Update Airline with specified ID.\n\nThis provides an example of using Key Value operations in Couchbase to upsert a document with specified ID.\n\n Class: [`Program.cs`](https://github.com/couchbase-examples/aspnet-minapi-quickstart-travelsample/blob/main/src/Couchbase.TravelSample/Program.cs)",
-        Parameters = new List<OpenApiParameter>
-        {
-            new OpenApiParameter
-            {
-                Name = "id",
-                In = ParameterLocation.Path,
-                Description = "Airline ID like airline_10",
-                Required = true
-            }
-        },
-        Responses = new OpenApiResponses
-        {
-            ["200"] = new OpenApiResponse
-            {
-                Description = "Airline Updated"
-            },
-            ["404"] = new OpenApiResponse
-            {
-                Description = "Airline ID not found"
-            },
-            ["500"] = new OpenApiResponse
-            {
-                Description = "Unexpected Error"
-            }
-        }
-    });
+    .WithDescription("Update Airline with specified ID.\n\nThis provides an example of using Key Value operations in Couchbase to upsert a document with specified ID.\n\n Class: [`Program.cs`](https://github.com/couchbase-examples/aspnet-minapi-quickstart-travelsample/blob/main/src/Couchbase.TravelSample/Program.cs)");
 
-app.MapDelete("/api/v1/airline/{id}", async(string id) => 
+app.MapDelete("/api/v1/airline/{id}",
+    [ProducesResponseType(StatusCodes.Status204NoContent, Description = "Airline Deleted")]
+    [ProducesResponseType(StatusCodes.Status404NotFound, Description = "Airline ID not found")]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError, Description = "Unexpected Error")]
+    async (
+        [Description("Airline ID like airline_10")] string id) =>
     {
         try
         {
@@ -1045,37 +770,14 @@ app.MapDelete("/api/v1/airline/{id}", async(string id) =>
         return Results.NotFound();
     })
     .WithTags("Airline")
-    .WithOpenApi(operation => new(operation)
-    {
-        Description = "Delete Airline with specified ID.\n\nThis provides an example of using Key Value operations in Couchbase to delete a document with specified ID.\n\n Class: [`Program.cs`](https://github.com/couchbase-examples/aspnet-minapi-quickstart-travelsample/blob/main/src/Couchbase.TravelSample/Program.cs)",
-        Parameters = new List<OpenApiParameter>
-        {
-            new OpenApiParameter
-            {
-                Name = "id",
-                In = ParameterLocation.Path,
-                Description = "Airline ID like airline_10",
-                Required = true
-            }
-        },
-        Responses = new OpenApiResponses
-        {
-            ["204"] = new OpenApiResponse
-            {
-                Description = "Airline Deleted"
-            },
-            ["404"] = new OpenApiResponse
-            {
-                Description = "Airline ID not found"
-            },
-            ["500"] = new OpenApiResponse
-            {
-                Description = "Unexpected Error"
-            }
-        }
-    });
+    .WithDescription("Delete Airline with specified ID.\n\nThis provides an example of using Key Value operations in Couchbase to delete a document with specified ID.\n\n Class: [`Program.cs`](https://github.com/couchbase-examples/aspnet-minapi-quickstart-travelsample/blob/main/src/Couchbase.TravelSample/Program.cs)");
 
-app.MapGet("/api/v1/route/{id}", async (string id) =>
+app.MapGet("/api/v1/route/{id}",
+    [ProducesResponseType(StatusCodes.Status200OK, Description = "Found Route")]
+    [ProducesResponseType(StatusCodes.Status404NotFound, Description = "Route ID not found")]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError, Description = "Unexpected Error")]
+    async (
+        [Description("Route ID like route_10000")] string id) =>
     {
         try
         {
@@ -1111,37 +813,16 @@ app.MapGet("/api/v1/route/{id}", async (string id) =>
         return Results.NotFound();
     })
     .WithTags("Route")
-    .WithOpenApi(operation => new(operation)
-    {
-        Description = "Get Route with specified ID.\n\nThis provides an example of using Key Value operations in Couchbase to get a document with specified ID.\n\n Class: [`Program.cs`](https://github.com/couchbase-examples/aspnet-minapi-quickstart-travelsample/blob/main/src/Couchbase.TravelSample/Program.cs)",
-        Parameters = new List<OpenApiParameter>
-        {
-            new OpenApiParameter
-            {
-                Name = "id",
-                In = ParameterLocation.Path,
-                Description = "Route ID like route_10000",
-                Required = true
-            }
-        },
-        Responses = new OpenApiResponses
-        {
-            ["200"] = new OpenApiResponse
-            {
-                Description = "Found Route"
-            },
-            ["404"] = new OpenApiResponse
-            {
-                Description = "Route ID not found"
-            },
-            ["500"] = new OpenApiResponse
-            {
-                Description = "Unexpected Error"
-            }
-        }
-    });
+    .WithDescription("Get Route with specified ID.\n\nThis provides an example of using Key Value operations in Couchbase to get a document with specified ID.\n\n Class: [`Program.cs`](https://github.com/couchbase-examples/aspnet-minapi-quickstart-travelsample/blob/main/src/Couchbase.TravelSample/Program.cs)");
 
-app.MapPost("/api/v1/route/{id}", async (string id, RouteCreateRequestCommand request, IValidator<RouteCreateRequestCommand> validator) =>
+app.MapPost("/api/v1/route/{id}",
+    [ProducesResponseType(StatusCodes.Status201Created, Description = "Created")]
+    [ProducesResponseType(StatusCodes.Status409Conflict, Description = "Route already exists")]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError, Description = "Unexpected Error")]
+    async (
+        [Description("Route ID like route_10000")] string id,
+        RouteCreateRequestCommand request,
+        IValidator<RouteCreateRequestCommand> validator) =>
     {
         var validation = await validator.ValidateAsync(request);
         if (!validation.IsValid)
@@ -1180,37 +861,16 @@ app.MapPost("/api/v1/route/{id}", async (string id, RouteCreateRequestCommand re
        
     })
     .WithTags("Route")
-    .WithOpenApi(operation => new(operation)
-    {
-        Description = "Create Route with specified ID.\n\nThis provides an example of using Key Value operations in Couchbase to create a new document with a specified ID.\n\n Class: [`Program.cs`](https://github.com/couchbase-examples/aspnet-minapi-quickstart-travelsample/blob/main/src/Couchbase.TravelSample/Program.cs)",
-        Parameters = new List<OpenApiParameter>
-        {
-            new OpenApiParameter
-            {
-                Name = "id",
-                In = ParameterLocation.Path,
-                Description = "Route ID like route_10000",
-                Required = true
-            }
-        },
-        Responses = new OpenApiResponses
-        {
-            ["201"] = new OpenApiResponse
-            {
-                Description = "Created"
-            },
-            ["409"] = new OpenApiResponse
-            {
-                Description = "Route already exists"
-            },
-            ["500"] = new OpenApiResponse
-            {
-                Description = "Unexpected Error"
-            }
-        }
-    });
+    .WithDescription("Create Route with specified ID.\n\nThis provides an example of using Key Value operations in Couchbase to create a new document with a specified ID.\n\n Class: [`Program.cs`](https://github.com/couchbase-examples/aspnet-minapi-quickstart-travelsample/blob/main/src/Couchbase.TravelSample/Program.cs)");
 
-app.MapPut("/api/v1/route/{id}", async (string id, RouteCreateRequestCommand request, IValidator<RouteCreateRequestCommand> validator) =>
+app.MapPut("/api/v1/route/{id}",
+    [ProducesResponseType(StatusCodes.Status200OK, Description = "Route Updated")]
+    [ProducesResponseType(StatusCodes.Status404NotFound, Description = "Route ID not found")]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError, Description = "Unexpected Error")]
+    async (
+        [Description("Route ID like route_10000")] string id,
+        RouteCreateRequestCommand request,
+        IValidator<RouteCreateRequestCommand> validator) =>
     {
         var validation = await validator.ValidateAsync(request);
         if (!validation.IsValid)
@@ -1254,37 +914,14 @@ app.MapPut("/api/v1/route/{id}", async (string id, RouteCreateRequestCommand req
         return Results.NotFound();
     })
     .WithTags("Route")
-    .WithOpenApi(operation => new(operation)
-    {
-        Description = "Update Route with specified ID.\n\nThis provides an example of using Key Value operations in Couchbase to upsert a document with specified ID.\n\n Class: [`Program.cs`](https://github.com/couchbase-examples/aspnet-minapi-quickstart-travelsample/blob/main/src/Couchbase.TravelSample/Program.cs)",
-        Parameters = new List<OpenApiParameter>
-        {
-            new OpenApiParameter
-            {
-                Name = "id",
-                In = ParameterLocation.Path,
-                Description = "Route ID like route_10000",
-                Required = true
-            }
-        },
-        Responses = new OpenApiResponses
-        {
-            ["200"] = new OpenApiResponse
-            {
-                Description = "Route Updated"
-            },
-            ["404"] = new OpenApiResponse
-            {
-                Description = "Route ID not found"
-            },
-            ["500"] = new OpenApiResponse
-            {
-                Description = "Unexpected Error"
-            }
-        }
-    });
+    .WithDescription("Update Route with specified ID.\n\nThis provides an example of using Key Value operations in Couchbase to upsert a document with specified ID.\n\n Class: [`Program.cs`](https://github.com/couchbase-examples/aspnet-minapi-quickstart-travelsample/blob/main/src/Couchbase.TravelSample/Program.cs)");
 
-app.MapDelete("/api/v1/route/{id}", async(string id) => 
+app.MapDelete("/api/v1/route/{id}",
+    [ProducesResponseType(StatusCodes.Status204NoContent, Description = "Route Deleted")]
+    [ProducesResponseType(StatusCodes.Status404NotFound, Description = "Route ID not found")]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError, Description = "Unexpected Error")]
+    async (
+        [Description("Route ID like route_10000")] string id) =>
     {
         try
         {
@@ -1324,35 +961,7 @@ app.MapDelete("/api/v1/route/{id}", async(string id) =>
         return Results.NotFound();
     })
     .WithTags("Route")
-    .WithOpenApi(operation => new(operation)
-    {
-        Description = "Delete Route with specified ID.\n\nThis provides an example of using Key Value operations in Couchbase to delete a document with specified ID.\n\n Class: [`Program.cs`](https://github.com/couchbase-examples/aspnet-minapi-quickstart-travelsample/blob/main/src/Couchbase.TravelSample/Program.cs)",
-        Parameters = new List<OpenApiParameter>
-        {
-            new OpenApiParameter
-            {
-                Name = "id",
-                In = ParameterLocation.Path,
-                Description = "Route ID like route_10000",
-                Required = true
-            }
-        },
-        Responses = new OpenApiResponses
-        {
-            ["204"] = new OpenApiResponse
-            {
-                Description = "Route Deleted"
-            },
-            ["404"] = new OpenApiResponse
-            {
-                Description = "Route ID not found"
-            },
-            ["500"] = new OpenApiResponse
-            {
-                Description = "Unexpected Error"
-            }
-        }
-    });
+    .WithDescription("Delete Route with specified ID.\n\nThis provides an example of using Key Value operations in Couchbase to delete a document with specified ID.\n\n Class: [`Program.cs`](https://github.com/couchbase-examples/aspnet-minapi-quickstart-travelsample/blob/main/src/Couchbase.TravelSample/Program.cs)");
 
 app.Run();
 
