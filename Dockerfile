@@ -1,5 +1,5 @@
 ﻿# Use the .NET SDK image to build the application
-FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build-env
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build-env
 WORKDIR /App
 
 # Copy only the necessary project files
@@ -11,7 +11,7 @@ COPY ./src/Couchbase.TravelSample ./
 RUN dotnet publish -c Release -o out
 
 # Use the .NET ASP.NET Runtime image for the final image
-FROM mcr.microsoft.com/dotnet/aspnet:8.0 
+FROM mcr.microsoft.com/dotnet/aspnet:10.0 
 WORKDIR /App
 
 # Expose port 8080 for the application

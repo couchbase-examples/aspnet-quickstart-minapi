@@ -1,6 +1,6 @@
-# Quickstart in Couchbase with C# and ASP.NET 8 Minimal API
+# Quickstart in Couchbase with C# and ASP.NET 10 Minimal API
 
-#### REST API using Couchbase Capella in C# and ASP.NET 8 Minimal API
+#### REST API using Couchbase Capella in C# and ASP.NET 10 Minimal API
 
 Often, the first step developers do after creating their database is to create a REST API that can perform Create, Read, Update, and Delete (CRUD) operations for that database. This repo is designed to teach you and give you a starter project (in C# using ASP.NET Minimal API) to generate such a REST API. After you have installed travel-sample bucket in your database, you can run this application which is a REST API with Swagger documentation so that you can learn:
 
@@ -9,14 +9,14 @@ Often, the first step developers do after creating their database is to create a
 
 Full documentation can be found on the [Couchbase Developer Portal](https://developer.couchbase.com/tutorial-quickstart-csharp-aspnet-minapi/).
 
-If you are looking for a quickstart using [ASP.NET Web API](https://learn.microsoft.com/en-us/aspnet/core/tutorials/first-web-api?view=aspnetcore-8.0&tabs=visual-studio), you can find it in this [repo](https://github.com/couchbase-examples/aspnet-quickstart).
+If you are looking for a quickstart using [ASP.NET Web API](https://learn.microsoft.com/en-us/aspnet/core/tutorials/first-web-api?view=aspnetcore-10.0&tabs=visual-studio), you can find it in this [repo](https://github.com/couchbase-examples/aspnet-quickstart).
 
 ## Prerequisites
 To run this prebuilt project, you will need:
 
 - [Couchbase Capella](https://www.couchbase.com/products/capella/) cluster with [travel-sample](https://docs.couchbase.com/dotnet-sdk/current/ref/travel-app-data-model.html) bucket loaded.
   - To run this tutorial using a self managed Couchbase cluster, please refer to the [appendix](#running-self-managed-couchbase-cluster).
-- [.NET SDK v6+](https://dotnet.microsoft.com/en-us/download/dotnet) installed.
+- [.NET SDK v10+](https://dotnet.microsoft.com/en-us/download/dotnet) installed.
   - Ensure that the .Net version is [compatible](https://docs.couchbase.com/dotnet-sdk/current/project-docs/compatibility.html#dotnet-compatibility) with the Couchbase SDK. 
 - Code Editor installed (Visual Studio Professional, Visual Studio Code, or JetBrains Rider)
 - Loading Travel Sample Bucket

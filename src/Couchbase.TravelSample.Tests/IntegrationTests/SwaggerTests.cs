@@ -38,4 +38,38 @@ public class SwaggerTests : IClassFixture<WebApplicationFactory<Program>>
         Assert.NotEmpty(versionChecks);
         Assert.Contains(versionChecks, pattern => Regex.IsMatch(openApiVersion!, pattern));
     }
+
+    [Fact]
+    public async Task TestSwaggerDocumentIncludesEndpointDocumentationAsync()
+    {
+        var document = JObject.Parse(await _client.GetStringAsync("/swagger/v1/swagger.json"));
+
+        // Every endpoint documents its operation, parameters, and responses.
+        foreach (var path in document["paths"]!.Children<JProperty>())
+        {
+            foreach (var operation in path.Value.Children<JProperty>())
+            {
+                var name = $"{operation.Name.ToUpperInvariant()} {path.Name}";
+                Assert.False(string.IsNullOrEmpty(operation.Value.Value<string>("description")), $"{name} has no description");
+                foreach (var parameter in operation.Value["parameters"]!)
+                {
+                    Assert.False(string.IsNullOrEmpty(parameter.Value<string>("description")),
+                        $"{name} parameter '{parameter.Value<string>("name")}' has no description");
+                }
+                Assert.Contains(operation.Value["responses"]!.Children<JProperty>(), r => r.Name == "500");
+            }
+        }
+
+        var listAirports = document["paths"]!["/api/v1/airport/list"]!["get"]!;
+        Assert.StartsWith("Get list of Airports.", listAirports.Value<string>("description"));
+        var country = listAirports["parameters"]!.Single(p => p.Value<string>("name") == "country");
+        Assert.Equal("query", country.Value<string>("in"));
+        Assert.Equal("Country (Example: United Kingdom, France, United States)", country.Value<string>("description"));
+        Assert.Equal("List of airports", listAirports["responses"]!["200"]!.Value<string>("description"));
+        Assert.Equal("Unexpected Error", listAirports["responses"]!["500"]!.Value<string>("description"));
+
+        var createAirport = document["paths"]!["/api/v1/airport/{id}"]!["post"]!;
+        Assert.NotNull(createAirport["requestBody"]);
+        Assert.Equal("Airport already exists", createAirport["responses"]!["409"]!.Value<string>("description"));
+    }
 }
