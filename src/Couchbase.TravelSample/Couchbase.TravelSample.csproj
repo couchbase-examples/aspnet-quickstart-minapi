@@ -13,7 +13,7 @@
         <PackageReference Include="FluentValidation" Version="12.2.0" />
         <PackageReference Include="CouchbaseNetClient" Version="3.10.1" />
         <PackageReference Include="FluentValidation.DependencyInjectionExtensions" Version="12.2.0" />
-        <PackageReference Include="Swashbuckle.AspNetCore" Version="10.3.1" />
+        <PackageReference Include="Swashbuckle.AspNetCore" Version="11.0.1" />
     </ItemGroup>
 
 </Project>
