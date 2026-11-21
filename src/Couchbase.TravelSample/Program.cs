@@ -3,6 +3,7 @@ using Couchbase;
 using Couchbase.Core.Exceptions.KeyValue;
 using Couchbase.Extensions.DependencyInjection;
 using Couchbase.KeyValue;
+using Couchbase.TravelSample;
 using Couchbase.TravelSample.Models;
 using Microsoft.OpenApi;
 using System.ComponentModel;
@@ -14,9 +15,6 @@ using Route = Couchbase.TravelSample.Models.Route;
 
 var builder = WebApplication.CreateBuilder(args);
 const string devSpecificOriginsName = "_devAllowSpecificOrigins";
-
-//global pointer to inventory scope
-IScope? inventoryScope = null;
 
 const string airportCollection = "airport";
 const string airlineCollection = "airline";
@@ -91,6 +89,13 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
+// Resolve the inventory scope before the server starts listening, so no request can arrive before it is ready
+// and a missing bucket or scope stops startup with a clear error.
+IScope inventoryScope = await InventoryScope.ResolveAsync(
+    app.Services.GetRequiredService<IBucketProvider>(),
+    app.Configuration["Couchbase:BucketName"],
+    app.Configuration["Couchbase:ScopeName"]);
+
 // Get the application lifetime object
 var lifetime = app.Services.GetRequiredService<IHostApplicationLifetime>();
 
@@ -105,41 +110,6 @@ lifetime.ApplicationStarted.Register(() =>
 
     // Log the Swagger URL
     logger.LogInformation("Swagger UI is available at: {Address}/swagger/index.html", address);
-    
-    var configuration = builder.Configuration;
-
-    // Retrieve configuration values from appsettings.json
-    var bucketName = configuration["Couchbase:BucketName"];
-    var scopeName = configuration["Couchbase:ScopeName"];
-    
-    if (string.IsNullOrEmpty(bucketName))
-    {
-        throw new InvalidOperationException("Bucket name is not provided in the configuration.");
-    }
-
-    if (string.IsNullOrEmpty(scopeName))
-    {
-        throw new InvalidOperationException("Scope name is not provided in the configuration.");
-    }
-
-    IBucket bucket;
-    try
-    {
-        bucket = app.Services.GetRequiredService<IBucketProvider>().GetBucketAsync(bucketName).GetAwaiter().GetResult();
-    }
-    catch (Exception)
-    {
-        throw new InvalidOperationException("Ensure that you have the travel-sample bucket loaded in the cluster.");
-    }
-
-    var scopes = bucket.Collections.GetAllScopesAsync().GetAwaiter().GetResult();
-    
-    if (!(scopes.Any(s => s.Name == scopeName)))
-    {
-        throw new InvalidOperationException("Inventory scope does not exist in the bucket. Ensure that you have the inventory scope in your travel-sample bucket.");
-    }
-    
-    inventoryScope = bucket.ScopeAsync(scopeName).GetAwaiter().GetResult();
 });
 
 // Configure the HTTP request pipeline.
